@@ -1,2 +1,0 @@
-# onlinelabourindex
-Online Labour Index
