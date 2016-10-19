@@ -18,6 +18,9 @@ library(dygraphs)
 library(xts)
 library(htmltools)
 library(tidyverse)
+library(shinyBS)
+library(shinyjs)
+
 # library(oidnChaRts)
 
 source("oidnChaRts.R")
@@ -104,6 +107,14 @@ shinyServer(function(input, output, session) {
   })
   
   output$landing_xts_highchart <- renderHighchart({
+    
+    if(is.null(input$landing_rollmean_k)){
+      shinyjs::show(id = "loading-content", anim = TRUE, animType = "fade")
+    } else {
+      shinyjs::hide(id = "loading-content", anim = TRUE, animType = "fade")
+    }
+    
+    
     selected_categories <- "Total"
     
     filtered <-
@@ -115,6 +126,8 @@ shinyServer(function(input, output, session) {
         n = as.numeric(input$landing_rollmean_k)
       )
     
+    # shinyjs::hide(id = "loading-content", anim = TRUE, animType = "fade")
+    
     highchart() %>%
       hc_add_series_xts(na.omit(xts_data), name = "Total") %>%
       hc_tooltip(valueDecimals = 0) %>%
@@ -122,6 +135,7 @@ shinyServer(function(input, output, session) {
                title = list("text" = "Online Labour Index")) %>%
       custom_ts_selector %>%
       iLabour_branding
+    
     
   })
   
@@ -169,11 +183,13 @@ shinyServer(function(input, output, session) {
                                            name = x,
                                            index = which(legend_order == x) - 1)
                      }))
+    
     hc %>% hc_tooltip(valueDecimals = 0) %>%
       hc_yAxis("opposite" = FALSE,
                title = list("text" = "Online Labour Index")) %>%
       custom_ts_selector %>%
       iLabour_branding
+    
     
     
   })

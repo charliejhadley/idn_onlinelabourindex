@@ -8,6 +8,19 @@
 ## Data Source: https://dx.doi.org/10.6084/m9.figshare.3761562.v56
 ## ================================================================================
 
+appCSS <- "
+#loading-content {
+position: absolute;
+background: #FFFFFF;
+opacity: 0.9;
+z-index: 100;
+left: 0;
+right: 0;
+height: 100%;
+text-align: center;
+color: #000000;
+}
+"
 
 library(shiny)
 library(highcharter)
@@ -15,11 +28,22 @@ library(plotly)
 library(dygraphs)
 library(htmltools)
 library(shinyBS)
+library(shinyjs)
 
 shinyServer(fluidPage(
+  tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css")),
+  useShinyjs(),
+  inlineCSS(appCSS),
   tabsetPanel(
     tabPanel("OLI",
              fluidPage(
+               div(
+                 id = "loading-content",
+                 fluidPage(
+                   h2(class = "animated infinite pulse","Loading data...")
+                   # HTML("<img src=images/cruk-logo.png width='50%'></img>")
+                   )
+               ),
                uiOutput("landing_rollmean_k_UI"),
                highchartOutput("landing_xts_highchart", width = "100%", height = "500px")
              )),
@@ -86,7 +110,7 @@ shinyServer(fluidPage(
         '<span class="glyphicon glyphicon-info-sign" aria-hidden="true""></span>'
       ),
       fluidPage(wellPanel(includeMarkdown(
-        knitr::knit("App_Description.Rmd")
+        knitr::knit("app_description.Rmd")
       )))
     )
   )
