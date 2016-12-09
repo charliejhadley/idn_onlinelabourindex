@@ -31,7 +31,8 @@ library(shinyBS)
 library(shinyjs)
 
 shinyServer(fluidPage(
-  tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css")),
+  # tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css")),
+  theme = "animate.min.css",
   useShinyjs(),
   inlineCSS(appCSS),
   tabsetPanel(
@@ -44,7 +45,16 @@ shinyServer(fluidPage(
                    # HTML("<img src=images/cruk-logo.png width='50%'></img>")
                    )
                ),
-               uiOutput("landing_rollmean_k_UI"),
+               radioButtons(
+                 "landing_rollmean_k",
+                 label = "",
+                 choices = list(
+                   "Show daily value" = 1,
+                   "Show 28-day moving average" = 28
+                 ),
+                 selected = 28,
+                 inline = TRUE
+               ),
                highchartOutput("landing_xts_highchart", width = "100%", height = "500px")
              )),
     tabPanel("By occupation",

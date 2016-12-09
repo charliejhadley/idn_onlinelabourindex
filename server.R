@@ -9,6 +9,7 @@
 ## ================================================================================
 
 # library(magrittr)
+start <- Sys.time()
 library(shiny)
 library(rfigshare)
 library(lubridate)
@@ -20,11 +21,17 @@ library(htmltools)
 library(tidyverse)
 library(shinyBS)
 library(shinyjs)
+loaded_libraries <- Sys.time()
 
 # library(oidnChaRts)
 
 source("oidnChaRts.R")
 source("data-processing.R", local = T)
+
+loaded_dataprocessing <- Sys.time()
+
+print(paste("Libraries: ", loaded_libraries - start))
+print(paste("Data processing: ", loaded_dataprocessing - start))
 
 xts_ma <- function(xts_data = NA,
                    n = 28,
@@ -76,36 +83,8 @@ custom_ts_selector <- function(x) {
 }
 
 shinyServer(function(input, output, session) {
-  output$selected_occupation_UI <- renderUI({
-    selectInput(
-      "selected_occupation",
-      label = HTML(
-        "Selected Occupations <span class='glyphicon glyphicon-info-sign' aria-hidden='true'></span>"
-      ),
-      choices = c(unique(
-        gig_economy_by_occupation$occupation
-      ), "Total"),
-      selected = setdiff(unique(
-        gig_economy_by_occupation$occupation
-      ), "Total"),
-      multiple = TRUE,
-      width = "100%"
-    )
-  })
-  
-  output$landing_rollmean_k_UI <- renderUI({
-    radioButtons(
-      "landing_rollmean_k",
-      label = "",
-      choices = list(
-        "Show daily value" = 1,
-        "Show 28-day moving average" = 28
-      ),
-      selected = 28,
-      inline = TRUE
-    )
-  })
-  
+
+  ## === Landing Tab
   output$landing_xts_highchart <- renderHighchart({
     
     if(is.null(input$landing_rollmean_k)){
@@ -139,6 +118,38 @@ shinyServer(function(input, output, session) {
     
   })
   
+  ## ==== By occuoation tab 
+  
+  output$selected_occupation_UI <- renderUI({
+    selectInput(
+      "selected_occupation",
+      label = HTML(
+        "Selected Occupations <span class='glyphicon glyphicon-info-sign' aria-hidden='true'></span>"
+      ),
+      choices = c(unique(
+        gig_economy_by_occupation$occupation
+      ), "Total"),
+      selected = setdiff(unique(
+        gig_economy_by_occupation$occupation
+      ), "Total"),
+      multiple = TRUE,
+      width = "100%"
+    )
+  })
+  
+  # output$landing_rollmean_k_UI <- renderUI({
+  #   radioButtons(
+  #     "landing_rollmean_k",
+  #     label = "",
+  #     choices = list(
+  #       "Show daily value" = 1,
+  #       "Show 28-day moving average" = 28
+  #     ),
+  #     selected = 28,
+  #     inline = TRUE
+  #   )
+  # })
+  
   output$occupation_rollmean_k_UI <- renderUI({
     radioButtons(
       "occupation_rollmean_k",
@@ -151,7 +162,6 @@ shinyServer(function(input, output, session) {
       inline = TRUE
     )
   })
-  
   
   output$occupation_xts_highchart <- renderHighchart({
     selected_categories <- input$selected_occupation
@@ -194,6 +204,7 @@ shinyServer(function(input, output, session) {
     
   })
   
+  ## ==== By employer country 
   output$region_xts_selected_regions_UI <- renderUI({
     selectInput(
       "region_xts_selected_region",
@@ -298,6 +309,8 @@ shinyServer(function(input, output, session) {
     
   })
   
+  ## ==== Occupation x country
+  ## ====
   output$global_trends_group_by_UI <- renderUI({
     selectInput(
       "global_trends_group_by",

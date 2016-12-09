@@ -10,7 +10,6 @@
 
 ## =========================== Load file ========================================
 ## ==============================================================================
-library(readr)
 
 fs_deposit_id <- 3761562
 deposit_details <- fs_details(fs_deposit_id)
@@ -24,8 +23,6 @@ occupation_import$date <- as.Date(occupation_import$date)
 occupation_import$count <- as.numeric(occupation_import$count)
 ## Make symbol for visualising:
 gig_economy_by_occupation <- occupation_import
-
-tail(gig_economy_by_occupation)
 
 ## Extract only new jobs
 gig_economy_by_occupation <- gig_economy_by_occupation %>%
