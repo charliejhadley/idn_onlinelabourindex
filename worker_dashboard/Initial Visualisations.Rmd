@@ -187,8 +187,42 @@ ggplot(g_data, aes(x = country, y = country.avg.success.rate)) +
 
 ```
 
+# Success rate by occupation
+
+```{r}
+# g_quantiles <- quantile(worker_data$num_workers)
+g_data <- worker_data %>%
+  filter(timestamp == max(timestamp)) %>%
+  # filter(num_workers >= g_quantiles[["25%"]]) %>%
+  # filter(num_workers <= g_quantiles[["75%"]]) %>%
+  mutate(success.rate = 100 * {num_projects / num_workers}) %>%
+  filter(success.rate < 100) %>%
+  group_by(occupation) %>%
+  mutate(occupation.avg.success.rate = mean(success.rate)) %>%
+  select(occupation, occupation.avg.success.rate) %>%
+  ungroup() %>%
+  unique() %>%
+  arrange(occupation.avg.success.rate) %>%
+  mutate(occupation = factor(occupation, levels = unique(occupation)))
+
+occupation_avg_succes_rate <- worker_data %>%
+  filter(timestamp == max(timestamp)) %>%
+  mutate(success.rate = 100* {num_projects / num_workers}) %>%
+  filter(success.rate < 100) %>%
+  select(success.rate) %>%
+  .[[1]] %>%
+  mean()
+
+g_quantiles <- quantile(g_data$occupation.avg.success.rate)
+ggplot(g_data, aes(x = occupation, y = occupation.avg.success.rate)) + 
+  geom_point() + 
+  coord_flip() + 
+  geom_hline(yintercept = g_quantiles[["50%"]]) + 
+  geom_segment(aes(y = occupation.avg.success.rate, yend = g_quantiles[["50%"]], xend = occupation), size = 2,
+               alpha = 0.2)
 
 
+```
 
 
 
