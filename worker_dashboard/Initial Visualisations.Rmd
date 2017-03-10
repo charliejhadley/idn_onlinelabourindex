@@ -1,0 +1,229 @@
+---
+title: "Initial Visualisations"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+# Experiment!
+
+```{r}
+library(tidyverse)
+worker_data <- read_csv("http://linux.oii.ox.ac.uk/~otto.kassi/OLI/worker_countrydata.txt")
+```
+
+Show number of workers today:
+
+```{r}
+worker_data %>%
+  filter(timestamp == max(timestamp)) %>%
+  group_by(country) %>%
+  mutate(workers.in.country = sum(num_workers)) %>%
+  select(country, workers.in.country) %>%
+  unique() %>%
+  ungroup() %>%
+  arrange(workers.in.country) %>%
+  mutate(country = factor(country, levels = unique(country))) %>%
+  ggplot(aes(x = country, y = workers.in.country)) + geom_col() + coord_flip() + ggtitle("Most Recent Number of Workers per country")
+
+```
+
+What is today's success rate?
+
+```{r}
+library(plotly)
+g_data <- worker_data %>%
+  filter(timestamp == max(timestamp)) %>%
+  mutate(success.rate = num_projects / num_workers) %>%
+  group_by(country) %>%
+  mutate(country.avg.success.rate = 100 * mean(success.rate)) %>%
+  select(country, country.avg.success.rate) %>%
+  ungroup() %>%
+  unique() %>%
+  arrange(country.avg.success.rate) %>%
+  mutate(country = factor(country, levels = unique(country)))
+
+ggplot(g_data, aes(x = country, y = country.avg.success.rate)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  ggtitle("Today's Country Success Rate",
+          subtitle = "(including 100% successful countries)")
+```
+
+Plotly version of above
+
+```{r}
+plot_ly(g_data,
+        x = ~country.avg.success.rate,
+        y = ~country) %>%
+  layout(title = "Today's Country Success Rate (including 100% successful countries)")
+```
+
+
+```{r}
+g_data <- worker_data %>%
+  filter(timestamp == max(timestamp)) %>%
+  mutate(success.rate = 100 * {num_projects / num_workers}) %>%
+  filter(success.rate < 100) %>%
+  group_by(country) %>%
+  mutate(country.avg.success.rate = mean(success.rate)) %>%
+  select(country, country.avg.success.rate) %>%
+  ungroup() %>%
+  unique() %>%
+  arrange(country.avg.success.rate) %>%
+  mutate(country = factor(country, levels = unique(country)))
+
+ggplot(g_data, aes(x = country, y = country.avg.success.rate)) + 
+  geom_bar(stat = "identity") + coord_flip() + ggtitle("Today's Country Success Rate",
+                                      subtitle = "(excluding 100% successful countries)")
+```
+
+Plotly version of above
+
+```{r}
+plot_ly(g_data,
+        x = ~country.avg.success.rate,
+        y = ~country) %>%
+  layout(title = "Today's Country Success Rate (excluding 100% successful countries)")
+```
+
+
+# Success Rates 
+
+What is the average success rate for a country today? The average success rate is `r worker_data %>%
+  filter(timestamp == max(timestamp)) %>%
+  mutate(success.rate = 100* {num_projects / num_workers}) %>%
+  filter(success.rate < 100) %>%
+  select(success.rate) %>%
+  .[[1]] %>%
+  mean()`
+
+```{r}
+country_avg_succes_rate <- worker_data %>%
+  filter(timestamp == max(timestamp)) %>%
+  mutate(success.rate = 100* {num_projects / num_workers}) %>%
+  filter(success.rate < 100) %>%
+  select(success.rate) %>%
+  .[[1]] %>%
+  mean()
+
+g_data <- worker_data %>%
+  filter(timestamp == max(timestamp)) %>%
+  mutate(success.rate = 100* {num_projects / num_workers}) %>%
+  filter(success.rate < 100) %>%
+  select(success.rate) %>%
+  mutate(country.average.success = factor("Country Average Success"))
+
+ggplot(g_data, aes(x = country.average.success, y = success.rate)) + 
+  geom_violin() + ggtitle("Today's Country Success Rate") + labs(y = "Percent", x = "")
+
+```
+
+However, when interpreting this chart it's important to note that many countries only have a small number of workers/won projects and this highly skews the data. For instance, Yemen:
+
+```{r}
+worker_data %>%
+  filter(timestamp == max(timestamp)) %>%
+  filter(country == "Yemen")
+```
+
+We could look at the distribution of workers across countries, and discount values outside of the 2nd and 3rd quartiles.
+
+```{r}
+g_quantiles <- quantile(worker_data$num_workers)
+
+g_data <- worker_data %>%
+  filter(timestamp == max(timestamp)) %>%
+  filter(num_workers >= g_quantiles[["25%"]]) %>%
+  filter(num_workers <= g_quantiles[["75%"]]) %>%
+  select(num_workers) %>%
+  mutate(workers = "workers")
+
+ggplot(g_data, aes(x = workers, y = num_workers)) + geom_violin() + ggtitle("Distribution of number of workers",
+                                                                            subtitle = "For the 2nd - 3rd quantiles")
+```
+
+Plot the above data as a deviation chart:
+
+```{r}
+g_quantiles <- quantile(worker_data$num_workers)
+g_data <- worker_data %>%
+  filter(timestamp == max(timestamp)) %>%
+  filter(num_workers >= g_quantiles[["25%"]]) %>%
+  filter(num_workers <= g_quantiles[["75%"]]) %>%
+  mutate(success.rate = 100 * {num_projects / num_workers}) %>%
+  filter(success.rate < 100) %>%
+  group_by(country) %>%
+  mutate(country.avg.success.rate = mean(success.rate)) %>%
+  select(country, country.avg.success.rate) %>%
+  ungroup() %>%
+  unique() %>%
+  arrange(country.avg.success.rate) %>%
+  mutate(country = factor(country, levels = unique(country)))
+
+country_avg_succes_rate <- worker_data %>%
+  filter(timestamp == max(timestamp)) %>%
+  mutate(success.rate = 100* {num_projects / num_workers}) %>%
+  filter(success.rate < 100) %>%
+  select(success.rate) %>%
+  .[[1]] %>%
+  mean()
+
+g_quantiles <- quantile(g_data$country.avg.success.rate)
+ggplot(g_data, aes(x = country, y = country.avg.success.rate)) + 
+  geom_point() + 
+  coord_flip() + 
+  geom_hline(yintercept = g_quantiles[["50%"]]) + 
+  geom_segment(aes(y = country.avg.success.rate, yend = g_quantiles[["50%"]], xend = country), size = 2,
+               alpha = 0.2) +
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = g_quantiles[["25%"]], ymax = g_quantiles[["75%"]], fill = "blue", alpha = .1, color = NA) + labs(x = "", y = "Success Rate %")
+
+
+```
+
+# Success rate by occupation
+
+```{r}
+# g_quantiles <- quantile(worker_data$num_workers)
+g_data <- worker_data %>%
+  filter(timestamp == max(timestamp)) %>%
+  # filter(num_workers >= g_quantiles[["25%"]]) %>%
+  # filter(num_workers <= g_quantiles[["75%"]]) %>%
+  mutate(success.rate = 100 * {num_projects / num_workers}) %>%
+  filter(success.rate < 100) %>%
+  group_by(occupation) %>%
+  mutate(occupation.avg.success.rate = mean(success.rate)) %>%
+  select(occupation, occupation.avg.success.rate) %>%
+  ungroup() %>%
+  unique() %>%
+  arrange(occupation.avg.success.rate) %>%
+  mutate(occupation = factor(occupation, levels = unique(occupation)))
+
+occupation_avg_succes_rate <- worker_data %>%
+  filter(timestamp == max(timestamp)) %>%
+  mutate(success.rate = 100* {num_projects / num_workers}) %>%
+  filter(success.rate < 100) %>%
+  select(success.rate) %>%
+  .[[1]] %>%
+  mean()
+
+g_quantiles <- quantile(g_data$occupation.avg.success.rate)
+ggplot(g_data, aes(x = occupation, y = occupation.avg.success.rate)) + 
+  geom_point() + 
+  coord_flip() + 
+  geom_hline(yintercept = g_quantiles[["50%"]]) + 
+  geom_segment(aes(y = occupation.avg.success.rate, yend = g_quantiles[["50%"]], xend = occupation), size = 2,
+               alpha = 0.2)
+
+
+```
+
+
+
+
