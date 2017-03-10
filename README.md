@@ -1,10 +1,27 @@
 # Online Labour Index
 
-This Live Data case study is the result of a collaboration between the Live Data project team and both Otto Kässi and Vili Lehdonvirta from the Oxford Internet Institue to visualise data collected from various "online gig economies" for the [iLabour Project](http://ilabour.oii.ox.ac.uk/).
+The Online Labour Index (OLI) is the first economic indicator that provides an online gig economy equivalent of conventional labour market statistics. It measures the utilization of online labour across countries and occupations by tracking the number of projects and tasks in real time. Read more about the project at [ilabour.oii.ox.ac.uk/online-labour-index](ilabour.oii.ox.ac.uk/online-labour-index).
 
-The visualisation was developed using Shiny and will be made available here shortly, note that the underlying data is available here: https://dx.doi.org/10.6084/m9.figshare.3761562.v3
+This repository contains the code for two Shiny apps developed and hosted by Oxford University's [Interactive Data Network](http://idn.it.ox.ac.uk). Shiny is a framework for developing interactive web applications using the scripting language R.
 
-Should you have questions about the project or wish to find out more about this dataset, please contact the [project team](http://ilabour.oii.ox.ac.uk/project-team/)
+The data behind the apps is deposited nightly to this Figshare deposit: [https://dx.doi.org/10.6084/m9.figshare.3761562](https://dx.doi.org/10.6084/m9.figshare.3761562).
+
+## Employer Dashboard
+
+The employer dashboard was initially designed developed as a [case study](http://idn.it.ox.ac.uk/article/online-labour-index-case-study) for the Live Data project, which spawned the Interactive Data Network. 
+
+<img src="employer-dashboard.png" width="200px"></img>
+
+There are four views of the data:
+
+- The Online Labour Index
+- Posted jobs split by occupation type
+- Posted jobs split by country
+- Intra-country/job breakdowns
+
+## Worker Dashboard
+
+The worker dashboard is currently under development, will provide a comparison of the success rate for winning jobs by different types of workers.
 
 # Attribution
 
@@ -12,5 +29,6 @@ Code is made available subject to a MIT license, the following copyright and att
 
 - Copyright Owner: University of Oxford
 - Date of Authorship: 2016
-- Developer: Martin John Hadley (orcid.org/0000-0002-3039-6849)
-- Academic Contact: Otto Kässi and Vili Lehdonvirta (http://orcid.org/0000-0002-6509-1703)
+- Data: [https://dx.doi.org/10.6084/m9.figshare.3761562](https://dx.doi.org/10.6084/m9.figshare.3761562)
+- Academic Contact: Otto Kässi and Vili Lehdonvirta
+- Developer: Martin John Hadley
