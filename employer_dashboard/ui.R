@@ -61,18 +61,8 @@ shinyServer(fluidPage(
              fluidPage(fluidPage(
                # wellPanel("Add/remove occupations in the box below to change the data shown in the chart"),
                fluidRow(
-                 column(
-                   uiOutput("selected_occupation_UI"),
-                   bsTooltip(
-                     "selected_occupation_UI",
-                     "Filter occupations by deleting/adding their names",
-                     "bottom",
-                     options = list(container = "body")
-                   ),
-                   width = 8
-                 ),
                  column(uiOutput("occupation_rollmean_k_UI"),
-                        width = 4)
+                        width = 12)
                ),
                highchartOutput("occupation_xts_highchart", width = "100%")
              ))),
@@ -80,20 +70,8 @@ shinyServer(fluidPage(
       "By employer country",
       fluidPage(
         # wellPanel("Add/remove regions in the box below to change the data shown in the chart"),
-        fluidRow(
-          column(
-            uiOutput("region_xts_selected_regions_UI"),
-            bsTooltip(
-              "region_xts_selected_regions_UI",
-              "Filter rcountries/regions by deleting/adding their names",
-              "bottom",
-              options = list(container = "body")
-            ),
-            width = 7
-          ),
-          column(uiOutput("region_rollmean_k_UI"),
-                 width = 5)
-        ),
+        uiOutput("region_rollmean_k_UI", width = "100%"),
+        width = 5,
         highchartOutput("region_xts_highchart", width = "100%"),
         width = "100%"
       )
