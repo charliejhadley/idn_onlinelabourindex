@@ -119,7 +119,7 @@ shinyServer(function(input, output, session) {
         hcaes(x = date, y = count),
         name = "Online Labour Index"
       ) %>%
-      hc_tooltip(valueDecimals = 0) %>%
+      hc_tooltip(valueDecimals = 1) %>%
       hc_yAxis("opposite" = FALSE,
                title = list("text" = "Online Labour Index")) %>%
       custom_ts_selector %>%
