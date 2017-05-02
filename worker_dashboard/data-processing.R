@@ -11,6 +11,31 @@
 ## =========================== Load file (temp location) ========================
 ## ==============================================================================
 
+# fs_deposit_id <- 3761562
+# deposit_details <- fs_details(fs_deposit_id)
+# 
+# deposit_details <- unlist(deposit_details$files)
+# deposit_details <- data.frame(split(deposit_details, names(deposit_details)),stringsAsFactors = F)
+# 
+
 worker_data <- read_csv("http://linux.oii.ox.ac.uk/~otto.kassi/OLI/worker_countrydata.txt")
 
-worker_data
+region_labels <- read_csv("data/regions.csv")
+
+
+# 
+# 
+# region_import <- read_csv(deposit_details[grepl("bcountrydata_",deposit_details$name),"download_url"])
+# 
+# region_df <- region_import %>%
+#   select(country, country_group) %>%
+#   unique()
+# 
+worker_data <- worker_data %>%
+  mutate(region = plyr::mapvalues(country, region_labels$country, region_labels$region))
+
+
+
+
+
+
