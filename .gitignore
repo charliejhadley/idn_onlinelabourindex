@@ -14,8 +14,12 @@
 *.txt
 *.tab
 
-# PDFs
+# Documents
 *.pdf
+*.pptx
+*.doc
+*.docx
+*.ppt
 
 # Ignore all xlsx files
 *.xlsx
