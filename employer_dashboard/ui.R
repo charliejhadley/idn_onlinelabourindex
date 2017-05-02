@@ -38,32 +38,36 @@ shinyServer(fluidPage(
   tabsetPanel(
     tabPanel("OLI",
              fluidPage(
-               div(
-                 id = "loading-content",
-                 fluidPage(
-                   h2(class = "animated infinite pulse","Loading data...")
-                   # HTML("<img src=images/cruk-logo.png width='50%'></img>")
-                   )
-               ),
-               radioButtons(
-                 "landing_rollmean_k",
-                 label = "",
-                 choices = list(
-                   "Show daily value" = 1,
-                   "Show 28-day moving average" = 28
+               div(id = "loading-content",
+                   fluidPage(
+                     h2(class = "animated infinite pulse", "Loading data...")
+                     # HTML("<img src=images/cruk-logo.png width='50%'></img>")
+                   )),
+               fluidRow(column(
+                 radioButtons(
+                   "landing_rollmean_k",
+                   label = "",
+                   choices = list(
+                     "Show daily value" = 1,
+                     "Show 28-day moving average" = 28
+                   ),
+                   selected = 28,
+                   inline = TRUE
                  ),
-                 selected = 28,
-                 inline = TRUE
-               ),
+                 width = 12
+               )),
                highchartOutput("landing_xts_highchart", width = "100%", height = "500px")
              )),
     tabPanel("By occupation",
              fluidPage(fluidPage(
-               fluidRow(
-                 column(uiOutput("occupation_rollmean_k_UI"),
-                        width = 12)
-               ),
-               highchartOutput("occupation_xts_highchart", width = "100%")
+               fluidRow(column(
+                 uiOutput("occupation_rollmean_k_UI"),
+                 width = 12
+               )),
+               highchartOutput("occupation_xts_highchart", width = "100%"),
+               wellPanel(
+                 "Add/Remove series by clicking legend entries above."
+               )
              ))),
     tabPanel(
       "By employer country",
@@ -71,10 +75,13 @@ shinyServer(fluidPage(
         uiOutput("region_rollmean_k_UI", width = "100%"),
         width = 5,
         highchartOutput("region_xts_highchart", width = "100%"),
+        wellPanel(
+          "Add/Remove series by clicking legend entries above."
+        ),
         width = "100%"
       )
     ),
-    tabPanel("Occupation x country",
+    tabPanel("Occupation x empl country",
              fluidPage(
                fluidRow(column(
                  uiOutput("global_trends_group_by_UI"),
@@ -88,6 +95,9 @@ shinyServer(fluidPage(
                  "global_trends_stacked_bar_chart",
                  width = "100%",
                  height = "450px"
+               ),
+               wellPanel(
+                 "Add/Remove series by clicking legend entries above."
                )
              )),
     tabPanel(
