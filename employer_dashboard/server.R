@@ -42,6 +42,15 @@ xts_ma <- function(xts_data = NA,
   xts_data
 }
 
+move_avg_hc_series <- function(data, window = 28) {
+  ma_ts <-
+    stats::filter(as.vector(xts(data$count, data$date)), rep(1 / window, window), sides = 1)
+  ma_tibble <- tibble(count = as.vector(ma_ts),
+                      date = data$date)
+  ma_tibble %>%
+    filter(!is.na(count))
+}
+
 iLabour_branding <- function(x) {
   hc_credits(
     hc = x,
@@ -96,19 +105,20 @@ shinyServer(function(input, output, session) {
     
     selected_categories <- "Total"
     
-    filtered <-
+    actual_labour_index <-
       gig_economy_by_occupation[gig_economy_by_occupation$occupation == "Total", ]
     
-    xts_data <-
-      xts_ma(
-        xts_data = xts(filtered$count, filtered$date),
-        n = as.numeric(input$landing_rollmean_k)
-      )
+    ma_data <- move_avg_hc_series(actual_labour_index, window = as.numeric(input$landing_rollmean_k))
     
     # shinyjs::hide(id = "loading-content", anim = TRUE, animType = "fade")
     
-    highchart() %>%
-      hc_add_series_xts(na.omit(xts_data), name = "Total") %>%
+    highchart(type = "stock") %>%
+      hc_add_series(
+        ma_data,
+        "line",
+        hcaes(x = date, y = count),
+        name = "Online Labour Index"
+      ) %>%
       hc_tooltip(valueDecimals = 0) %>%
       hc_yAxis("opposite" = FALSE,
                title = list("text" = "Online Labour Index")) %>%
@@ -118,37 +128,7 @@ shinyServer(function(input, output, session) {
     
   })
   
-  ## ==== By occuoation tab 
-  
-  output$selected_occupation_UI <- renderUI({
-    selectInput(
-      "selected_occupation",
-      label = HTML(
-        "Selected Occupations <span class='glyphicon glyphicon-info-sign' aria-hidden='true'></span>"
-      ),
-      choices = c(unique(
-        gig_economy_by_occupation$occupation
-      ), "Total"),
-      selected = setdiff(unique(
-        gig_economy_by_occupation$occupation
-      ), "Total"),
-      multiple = TRUE,
-      width = "100%"
-    )
-  })
-  
-  # output$landing_rollmean_k_UI <- renderUI({
-  #   radioButtons(
-  #     "landing_rollmean_k",
-  #     label = "",
-  #     choices = list(
-  #       "Show daily value" = 1,
-  #       "Show 28-day moving average" = 28
-  #     ),
-  #     selected = 28,
-  #     inline = TRUE
-  #   )
-  # })
+  ## ==== By occupation tab 
   
   output$occupation_rollmean_k_UI <- renderUI({
     radioButtons(
@@ -164,10 +144,14 @@ shinyServer(function(input, output, session) {
   })
   
   output$occupation_xts_highchart <- renderHighchart({
-    selected_categories <- input$selected_occupation
     
+    if(is.null(input$occupation_rollmean_k)){
+      return()
+    }
+    
+    all_occupations <- setdiff(unique(gig_economy_by_occupation$occupation), "Total")
     legend_order <- gig_economy_by_occupation %>%
-      filter(occupation %in% selected_categories) %>%
+      filter(occupation %in% all_occupations) %>%
       group_by(occupation) %>%
       mutate(total = sum(count)) %>%
       arrange(desc(total)) %>%
@@ -175,69 +159,39 @@ shinyServer(function(input, output, session) {
       unique() %>%
       unlist(use.names = F)
     
-    hc <- highchart()
-    
-    invisible(lapply(selected_categories,
+    hc <- highchart(type = "stock")
+    invisible(lapply(all_occupations,
                      function(x) {
-                       filtered <-
-                         gig_economy_by_occupation[gig_economy_by_occupation$occupation == x, ]
-                       
-                       xts_data <-
-                         xts_ma(
-                           xts_data = xts(filtered$count, filtered$date),
-                           n = as.numeric(input$occupation_rollmean_k)
-                         )
-                       
+                       filtered_data <- gig_economy_by_occupation %>%
+                         filter(occupation == x) %>%
+                         select(date, count)
+
+                       ma_data <- move_avg_hc_series(filtered_data, window = as.numeric(input$occupation_rollmean_k))
+
                        hc <<- hc %>%
-                         hc_add_series_xts(na.omit(xts_data),
-                                           name = x,
-                                           index = which(legend_order == x) - 1)
+                         hc_add_series(
+                           ma_data,
+                           "line",
+                           hcaes(x = date, y = count),
+                           name = x,
+                           index = which(legend_order == x) - 1
+                         )
                      }))
     
-    hc %>% hc_tooltip(valueDecimals = 0) %>%
-      hc_yAxis("opposite" = FALSE,
-               title = list("text" = "Online Labour Index")) %>%
+    hc %>%
+      hc_tooltip(valueDecimals = 0) %>%
+      hc_legend(enabled = TRUE, reverse = TRUE) %>%
+      hc_yAxis(
+        "opposite" = FALSE,
+        title = list("text" = "Online Labour Index")
+      ) %>%
       custom_ts_selector %>%
       iLabour_branding
-    
     
     
   })
   
   ## ==== By employer country 
-  output$region_xts_selected_regions_UI <- renderUI({
-    selectInput(
-      "region_xts_selected_region",
-      label = HTML(
-        "Selected Countries/Regions <span class='glyphicon glyphicon-info-sign' aria-hidden='true'></span>"
-      ),
-      # choices = unique(gig_economy_by_boundary[["country_group"]]),
-      choices = c(
-        "United States",
-        "Canada",
-        "other Americas",
-        "United Kingdom",
-        "other Europe",
-        "Australia",
-        "India",
-        "other Asia and Oceania",
-        "all Africa"
-      ),
-      selected = c(
-        "United States",
-        "Canada",
-        "other Americas",
-        "United Kingdom",
-        "other Europe",
-        "Australia",
-        "India",
-        "other Asia and Oceania",
-        "all Africa"
-      ),
-      multiple = TRUE,
-      width = "100%"
-    )
-  })
   
   output$region_rollmean_k_UI <- renderUI({
     radioButtons(
@@ -253,7 +207,22 @@ shinyServer(function(input, output, session) {
   })
   
   output$region_xts_highchart <- renderHighchart({
-    selected_categories <- input$region_xts_selected_region
+    
+    if(is.null(input$region_rollmean_k)){
+      return()
+    }
+    
+    selected_country_groups <- c(
+      "United States",
+      "Canada",
+      "other Americas",
+      "United Kingdom",
+      "other Europe",
+      "Australia",
+      "India",
+      "other Asia and Oceania",
+      "all Africa"
+    )
     
     tallied_boundaries <- gig_economy_by_boundary %>%
       group_by(country_group, timestamp) %>%
@@ -279,30 +248,38 @@ shinyServer(function(input, output, session) {
       unique() %>%
       unlist(use.names = F)
     
+    tallied_boundaries
+    
     hc <- highchart()
     
-    invisible(lapply(selected_categories,
+    hc <- highchart(type = "stock")
+    invisible(lapply(selected_country_groups,
                      function(x) {
-                       filtered <-
-                         tallied_boundaries[tallied_boundaries$country_group == x, ]
+                       filtered_data <- tallied_boundaries %>%
+                         filter(country_group == x) %>%
+                         select(date, labour.index) %>%
+                         rename(count = labour.index)
                        
-                       xts_data <-
-                         xts_ma(
-                           xts_data = xts(filtered$labour.index, filtered$date),
-                           n = as.numeric(input$region_rollmean_k)
-                         )
-                       # xts_data <- xts_ma(xts_data = xts(filtered$labour.index, filtered$date), n = 28)
                        
+                       ma_data <- move_avg_hc_series(filtered_data, window = as.numeric(input$region_rollmean_k))
+
                        hc <<- hc %>%
-                         hc_add_series_xts(na.omit(xts_data),
-                                           name = x,
-                                           index = which(legend_order == x) - 1)
-                       
+                         hc_add_series(
+                           ma_data,
+                           "line",
+                           hcaes(x = date, y = count),
+                           name = x,
+                           index = which(legend_order == x) - 1
+                         )
                      }))
+    
     hc %>%
       hc_tooltip(valueDecimals = 0) %>%
-      hc_yAxis(title = list("text" = "Online Labour Index"),
-               "opposite" = FALSE) %>%
+      hc_legend(enabled = TRUE, reverse = TRUE) %>%
+      hc_yAxis(
+        "opposite" = FALSE,
+        title = list("text" = "Online Labour Index")
+      ) %>%
       custom_ts_selector %>%
       iLabour_branding
     
@@ -403,7 +380,8 @@ shinyServer(function(input, output, session) {
           hc_tooltip(
             formatter = JS(
               "function() {return '<b>'+ this.series.name +'</b>: '+ Highcharts.numberFormat(this.percentage, 0) +' %';}"
-            )
+            ),
+            shared = TRUE
           ) %>% iLabour_branding()
         
         if (input$global_trends_stack_by == "percent") {
@@ -458,7 +436,8 @@ shinyServer(function(input, output, session) {
           hc_tooltip(
             formatter = JS(
               "function() {return '<b>'+ this.series.name +'</b>: '+ Highcharts.numberFormat(this.percentage, 0) +' %';}"
-            )
+            ),
+            shared = TRUE
           )  %>% iLabour_branding()
         
         if (input$global_trends_stack_by == "percent") {
@@ -517,8 +496,10 @@ shinyServer(function(input, output, session) {
                    panKey = 'shift') %>%
           hc_tooltip(
             formatter = JS(
-              "function() {return '<b>'+ this.series.name +'</b>: '+ Highcharts.numberFormat(this.percentage, 0) +' %';}"
-            )
+              "function() {console.log(this);
+              return '<b>'+ this.series.name +'</b>: '+ Highcharts.numberFormat(this.percentage, 0) +' %';}"
+            ),
+            shared = TRUE
           ) %>% iLabour_branding()
         
         if (input$global_trends_stack_by == "percent") {
