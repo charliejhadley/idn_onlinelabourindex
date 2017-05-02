@@ -119,7 +119,7 @@ shinyServer(function(input, output, session) {
         hcaes(x = date, y = count),
         name = "Online Labour Index"
       ) %>%
-      hc_tooltip(valueDecimals = 1) %>%
+      hc_tooltip(valueDecimals = 1,  xDateFormat = "%d %b %Y") %>%
       hc_yAxis("opposite" = FALSE,
                title = list("text" = "Online Labour Index")) %>%
       custom_ts_selector %>%
@@ -179,7 +179,7 @@ shinyServer(function(input, output, session) {
                      }))
     
     hc %>%
-      hc_tooltip(valueDecimals = 0) %>%
+      hc_tooltip(valueDecimals = 1,  xDateFormat = "%d %b %Y") %>%
       hc_legend(enabled = TRUE, reverse = TRUE) %>%
       hc_yAxis(
         "opposite" = FALSE,
@@ -274,7 +274,7 @@ shinyServer(function(input, output, session) {
                      }))
     
     hc %>%
-      hc_tooltip(valueDecimals = 0) %>%
+      hc_tooltip(valueDecimals = 1,  xDateFormat = "%d %b %Y") %>%
       hc_legend(enabled = TRUE, reverse = TRUE) %>%
       hc_yAxis(
         "opposite" = FALSE,
