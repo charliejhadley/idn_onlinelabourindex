@@ -306,7 +306,7 @@ shinyServer(function(input, output, session) {
       "global_trends_stack_by",
       "",
       choices = c("Within group" = "percent", "Market share" = "normal"),
-      selected = "Market share",
+      selected = "normal",
       width = "100%",
       inline = TRUE
     )

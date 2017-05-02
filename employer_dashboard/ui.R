@@ -59,7 +59,6 @@ shinyServer(fluidPage(
              )),
     tabPanel("By occupation",
              fluidPage(fluidPage(
-               # wellPanel("Add/remove occupations in the box below to change the data shown in the chart"),
                fluidRow(
                  column(uiOutput("occupation_rollmean_k_UI"),
                         width = 12)
@@ -69,7 +68,6 @@ shinyServer(fluidPage(
     tabPanel(
       "By employer country",
       fluidPage(
-        # wellPanel("Add/remove regions in the box below to change the data shown in the chart"),
         uiOutput("region_rollmean_k_UI", width = "100%"),
         width = 5,
         highchartOutput("region_xts_highchart", width = "100%"),
@@ -78,7 +76,6 @@ shinyServer(fluidPage(
     ),
     tabPanel("Occupation x country",
              fluidPage(
-               # wellPanel("Zoom into the chart by selecting an area of interest, pan around in the chart by holding SHIFT."),
                fluidRow(column(
                  uiOutput("global_trends_group_by_UI"),
                  width = 6
