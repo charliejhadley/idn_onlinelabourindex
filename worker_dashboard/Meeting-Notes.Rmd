@@ -1,0 +1,11 @@
+---
+title: "Meeting Notes"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Threshold out countries from choropleth
+

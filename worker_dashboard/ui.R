@@ -29,6 +29,7 @@ library(dygraphs)
 library(htmltools)
 library(shinyBS)
 library(shinyjs)
+library("leaflet")
 
 shinyServer(fluidPage(
   # tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css")),
@@ -36,67 +37,103 @@ shinyServer(fluidPage(
   useShinyjs(),
   inlineCSS(appCSS),
   tabsetPanel(
+    # tabPanel(
+    #   "Worker Allocation Pyramid",
+    #   fluidPage(
+    #     selectInput(
+    #       "pyramid_categories",
+    #       "How should pyramid be split?",
+    #       choices = c("country", "region")
+    #     ),
+    #     highchartOutput("population_pyramid_hc")
+    #   )
+    # ),
     tabPanel(
-      "Worker Allocation Pyramid",
+      "Worker world map",
       fluidPage(
-        selectInput(
-          "pyramid_categories",
-          "How should pyramid be split?",
-          choices = c("country", "region")
+        fluidRow(column(
+          radioButtons(
+            "world_map_dominant_or_occupation",
+            "",
+            choices = c(
+              "Show top occupation in each country" = "dominant",
+              "Select occupation" = "single-occupation"
+            ),
+            inline = TRUE
+          ),
+          width = 12
         ),
-        highchartOutput("population_pyramid_hc")
+        style = "position:relative;z-index:10000;"),
+        
+        div(uiOutput("worldmap_selected_occupation_UI"),
+            style = "position:relative;z-index:10000;"),
+        
+        
+        div(id = "loading-choropleth",
+            fluidPage(
+              h2(class = "animated infinite pulse", "Loading data...")
+              # HTML("<img src=images/cruk-logo.png width='50%'></img>")
+            )),
+        leafletOutput("worker_occupation_choropleth",
+                      height = "500px"),
+        HTML("<p align='right'>Source: Online Labour Index</p>")
       )
     ),
     tabPanel(
-      "Worker World Map",
+      "Occupation x worker country",
       fluidPage(
-        "Choropleth with the scale being number of projects",
-        "There's a checkbox for 'interrogate' (default FALSE) when TRUE activates occupation filter",
-        "Hue: the (which market is the country most represented) occupation, Saturation: the relative number of projects",
-        "Default show all occuptations, allow user to remove/add occupations to the map",
-        "Below is the table we want to plot",
-        dataTableOutput("placeholder_choropleth_details_DT")
-      )
-    ),
-    tabPanel(
-      "Workers by Occupation",
-      fluidPage(
+        # selectInput(
+        #   "occupation_bar_value",
+        #   "What should be displayed?",
+        #   choices = list("Number of workers" = "~total.workers",
+        #                  "Number of projects" = "~total.projects")
+        # ),
         selectInput(
-          "occupation_bar_value",
-          "What should be displayed?",
-          choices = list("Number of workers" = "~total.workers",
-                         "Number of projects" = "~total.projects")
+          "global_trends_group_by",
+          "Group By",
+          choices = list(
+            "Geographic region" = "region",
+            "Occupation" = "occupation",
+            "Top 20 countries" = "country"
+          ),
+          width = "100%"
         ),
         radioButtons(
           "occupation_bar_stackby",
           label = "",
-          choices = list("Within group" = "percent", "Market Share" = "value"),
+          choices = list(
+            "Within group" = "percent",
+            "Market share" = "value"
+          ),
+          selected = "value",
           inline = TRUE
         ),
         highchartOutput("occupation_barchart_hc")
       )
     ),
-    tabPanel(
-      "Worker history",
-      fluidPage(
-        selectInput(
-          "occupation_stackedarea_value",
-          "What should be displayed?",
-          choices = list("Number of workers" = "total.workers",
-                         "Number of projects" = "total.projects")
-        ),
-        radioButtons(
-          "occupation_stackedarea_stackby",
-          label = "",
-          choices = list(
-            "Percentage (useful for comparison)" = "percent",
-            "Actual values (how many workers/projects)" = "normal"
-          ),
-          inline = TRUE
-        ),
-        highchartOutput("occupation_history_hc")
-      )
-    ),
+    # Commented out deliberately
+    # tabPanel(
+    #   "Worker history",
+    #   fluidPage(
+    #     selectInput(
+    #       "occupation_stackedarea_value",
+    #       "What should be displayed?",
+    #       choices = list("Number of workers" = "total.workers",
+    #                      "Number of projects" = "total.projects"),
+    #       selected = "Number of workers"
+    #     ),
+    #     radioButtons(
+    #       "occupation_stackedarea_stackby",
+    #       label = "",
+    #       choices = list(
+    #         "Percentage (useful for comparison)" = "percent",
+    #         "Actual values (how many workers/projects)" = "normal"
+    #       ),
+    #       inline = TRUE
+    #     ),
+    #     highchartOutput("occupation_history_hc")
+    #   )
+    # ),
     tabPanel(
       HTML(
         '<span class="glyphicon glyphicon-info-sign" aria-hidden="true""></span>'

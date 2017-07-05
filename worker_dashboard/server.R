@@ -11,7 +11,7 @@
 # library(magrittr)
 start <- Sys.time()
 library(shiny)
-# library(rfigshare)
+library(rfigshare)
 library(lubridate)
 library(plotly)
 library(highcharter)
@@ -21,6 +21,13 @@ library(htmltools)
 library(tidyverse)
 library(shinyBS)
 library(shinyjs)
+library(leaflet)
+library(sf)
+library(viridis)
+library(rlang)
+library(forcats)
+# devtools::install_github('bhaskarvk/leaflet.extras')
+library(leaflet.extras) ## Needed for background color of leaflet map
 loaded_libraries <- Sys.time()
 
 library(oidnChaRts)
@@ -32,15 +39,6 @@ loaded_dataprocessing <- Sys.time()
 print(paste("Libraries: ", loaded_libraries - start))
 print(paste("Data processing: ", loaded_dataprocessing - start))
 
-xts_ma <- function(xts_data = NA,
-                   n = 28,
-                   sides = 1) {
-  xts_data <- xts_data
-  xts_data[index(xts_data)] <-
-    as.vector(stats::filter(as.vector(xts_data), rep(1 / n, n), sides = sides)) # http://stackoverflow.com/a/4862334/1659890
-  xts_data
-}
-
 iLabour_branding <- function(x) {
   hc_credits(
     hc = x,
@@ -51,184 +49,139 @@ iLabour_branding <- function(x) {
   )
 }
 
-custom_ts_selector <- function(x) {
-  hc_rangeSelector(hc = x,
-                   buttons = list(
-                     list(
-                       type = 'month',
-                       count = 1,
-                       text = '1mth'
-                     ),
-                     list(
-                       type = 'month',
-                       count = 3,
-                       text = '3mth'
-                     ),
-                     list(
-                       type = 'month',
-                       count = 6,
-                       text = '6mth'
-                     ),
-                     list(type = 'ytd',
-                          text = 'YTD'),
-                     list(
-                       type = 'year',
-                       count = 1,
-                       text = '1y'
-                     ),
-                     list(type = 'all',
-                          text = 'All')
-                   ))
-}
 
 shinyServer(function(input, output, session) {
-  population_pyramid_data <-
-    eventReactive(c(input$pyramid_categories),
-                  {
-                    switch(input$pyramid_categories,
-                           "country" = {
-                             worker_data %>%
-                               filter(timestamp == max(timestamp)) %>%
-                               group_by(country) %>%
-                               mutate(
-                                 total.workers = sum(num_workers),
-                                 total.projects = sum(num_projects)
-                               ) %>%
-                               ungroup() %>%
-                               select(-occupation, -num_workers, -num_projects, -region) %>%
-                               unique() %>%
-                               mutate(
-                                 total.workers = 100 * {
-                                   total.workers / sum(total.workers)
-                                 },
-                                 total.projects = 100 * {
-                                   total.projects / sum(total.projects)
-                                 },
-                                 workers.plus.projects = total.workers + total.projects
-                               ) %>%
-                               arrange(desc(workers.plus.projects)) %>%
-                               rename(category = country) %>%
-                               slice(1:20)
-                           },
-                           "region" = {
-                             worker_data %>%
-                               filter(timestamp == max(timestamp)) %>%
-                               group_by(region) %>%
-                               mutate(
-                                 total.workers = sum(num_workers),
-                                 total.projects = sum(num_projects)
-                               ) %>%
-                               ungroup() %>%
-                               select(-occupation, -num_workers, -num_projects, -country) %>%
-                               unique() %>%
-                               mutate(
-                                 total.workers = 100 * {
-                                   total.workers / sum(total.workers)
-                                 },
-                                 total.projects = 100 * {
-                                   total.projects / sum(total.projects)
-                                 },
-                                 workers.plus.projects = total.workers + total.projects
-                               ) %>%
-                               arrange(desc(workers.plus.projects)) %>%
-                               rename(category = region)
-                           })
-                    
-                  })
-  
-  output$population_pyramid_hc <- renderHighchart({
-    population_pyramid_data <- population_pyramid_data()
-    
-    
-    highchart() %>%
-      hc_add_series(population_pyramid_data,
-                    "bar",
-                    hcaes(y = total.projects,
-                          x = category),
-                    name = "Projects") %>%
-      hc_add_series(population_pyramid_data,
-                    "bar",
-                    hcaes(y = -1 * total.workers,
-                          x = category),
-                    name = "Workers") %>%
-      hc_plotOptions(series = list(stacking = "normal"),
-                     bar = list(minPointLength = 3)) %>%
-      hc_xAxis(
-        list(
-          categories = population_pyramid_data$category,
-          reversed = TRUE,
-          opposite = FALSE
-        ),
-        list(
-          opposite = TRUE,
-          reversed = TRUE,
-          categories = population_pyramid_data$category,
-          linkedTo = 0
-        )
-      ) %>%
-      hc_yAxis(labels = list(
-        formatter = JS("function () {
-                       return Math.abs(this.value) + '%';
-  }")
-  )) %>%
-      hc_tooltip(
-        formatter = JS(
-          "function () {
-          return '<b>' + this.series.name + ' in ' + this.point.category + '</b><br/>' +
-          Highcharts.numberFormat(Math.abs(this.point.y), 2);
-}"
-)
-        )
-})
-  
-  
-  occupation_barchart_data <-
-    eventReactive(c(input$occupation_bar_value),
-                  {
-                    worker_data %>%
-                      filter(timestamp == max(timestamp)) %>%
-                      group_by(occupation, region) %>%
-                      mutate(total.workers = sum(num_workers)) %>%
-                      mutate(total.projects = sum(num_projects)) %>%
-                      select(occupation, region, total.workers, total.projects) %>%
-                      ungroup() %>%
-                      unique()
-                  })
-  
   output$occupation_barchart_hc <- renderHighchart({
-    occupation_barchart_data <- occupation_barchart_data()
+    category_column <- sym(input$global_trends_group_by)
     
-    stacked_bar_chart(
-      data = occupation_barchart_data,
-      library = "highcharter",
-      categories.column = ~ occupation,
-      subcategories.column = ~ region,
-      value.column = as.formula(input$occupation_bar_value),
-      stacking.type = input$occupation_bar_stackby
-    )
+    if (category_column == "region") {
+      subcategory_column <- sym("occupation")
+    }
+    
+    if (category_column == "occupation") {
+      subcategory_column <- sym("region")
+    }
+    
+    if (category_column == "country") {
+      subcategory_column <- sym("occupation")
+    }
     
     
-  })
-  
-  
-  output$placeholder_choropleth_details_DT <- renderDataTable({
-    
-    data_to_chart <- worker_data %>%
+    occupation_barchart_data <- worker_data %>%
       filter(timestamp == max(timestamp)) %>%
-      group_by(occupation, region) %>%
+      group_by(!!category_column, !!subcategory_column) %>%
       mutate(total.workers = sum(num_workers)) %>%
       mutate(total.projects = sum(num_projects)) %>%
-      select(occupation, region, total.projects) %>%
-      group_by(occupation) %>%
+      group_by(!!category_column) %>%
+      select(!!category_column,!!subcategory_column,
+             total.workers,
+             total.projects) %>%
+      ungroup() %>%
       unique() %>%
-      mutate(calc = 100*{total.projects / sum(total.projects)}) %>%
-      group_by(region) %>%
-      select(-total.projects) %>%
-      filter(calc == max(calc))
+      mutate(
+        category := !!category_column,
+        subcategory := !!subcategory_column,
+        percent.workers = 100 * total.workers / sum(total.workers)
+      )
     
-    data_to_chart
+    if (category_column == "country") {
+      top_20_countries <- occupation_barchart_data %>%
+        group_by(category) %>%
+        summarise(workers.in.category = sum(total.workers)) %>%
+        arrange(desc(workers.in.category)) %>%
+        slice(1:20) %>%
+        select(category) %>%
+        .[[1]]
+      
+      occupation_barchart_data <- occupation_barchart_data %>%
+        filter(category %in% top_20_countries)
+      
+    }
     
-  })
+    category_order <- occupation_barchart_data %>%
+      group_by(!!category_column) %>%
+      summarise(workers.in.occ = sum(total.workers)) %>%
+      arrange(desc(workers.in.occ)) %>%
+      select(!!category_column) %>%
+      .[[1]]
+    
+    
+    subcategory_order <- occupation_barchart_data %>%
+      group_by(!!subcategory_column) %>%
+      summarise(workers.in.occ = sum(total.workers)) %>%
+      arrange(desc(workers.in.occ)) %>%
+      select(!!subcategory_column) %>%
+      .[[1]]
+    
+    hc <- stacked_bar_chart(
+      data = occupation_barchart_data,
+      library = "highcharter",
+      categories.column = ~ category,
+      subcategories.column = ~ subcategory,
+      categories.order = category_order,
+      subcategories.order = subcategory_order,
+      value.column = ~ percent.workers,
+      stacking.type = input$occupation_bar_stackby
+    ) %>%
+      hc_yAxis(labels = list(formatter = JS(
+        "function(){
+        return this.value + '%';
+  }"
+)))
+    
+    if (input$occupation_bar_stackby == "percent") {
+      hc %>%
+        hc_tooltip(
+          formatter = JS(
+            "function(){
+            var subcat = '';
+
+
+            $.each(this.points.reverse(),function(i, point){
+            
+            subcat += '<span style=\U0022' + 'color:' + this.point.series.color + '\U0022>\u25CF</span>' + ' ' + this.point.series.name + ': ' + Highcharts.numberFormat(this.point.percentage, 1) + '% of workers<br/>';
+            //console.log(this.point.series.name)
+            });
+            
+            return this.x.name + ' worker distribution:' + '<br/>' +
+            subcat;
+    }"
+        ),
+        shared = TRUE
+          ) %>%
+        iLabour_branding() %>%
+        hc_yAxis(max = 100)
+      } else {
+        if (category_column == "occupation") {
+          hc %>%
+            hc_tooltip(
+              formatter =  JS(
+                "function(){
+                console.log(this);
+                return Highcharts.numberFormat(this.total, 1) + '% of workers are in the ' +
+                this.key.name + ' category';
+        }"
+)
+              )
+      } else {
+        hc %>%
+          hc_tooltip(
+            formatter =  JS(
+              "function(){
+              console.log(this);
+              return Highcharts.numberFormat(this.total, 1) + '% of workers are in ' +
+              this.key.name;
+      }"
+)
+            )
+      }
+        
+        
+      }
+    
+      })
+  
+  source(file = "tab_worldmap.R", local = TRUE)$value
   
   occupation_history_data <-
     eventReactive(c(input$occupation_stackedarea_value),
@@ -277,4 +230,4 @@ shinyServer(function(input, output, session) {
       hc_tooltip(split = TRUE)
   })
   
-  })
+      })
