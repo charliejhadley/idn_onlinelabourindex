@@ -8,24 +8,25 @@
 ## Data Source: https://dx.doi.org/10.6084/m9.figshare.3761562
 ## ================================================================================
 
-# library(magrittr)
+# library("magrittr)
 start <- Sys.time()
-library(shiny)
-library(rfigshare)
-library(lubridate)
-library(plotly)
-library(highcharter)
-library(dygraphs)
-library(xts)
-library(htmltools)
-library(tidyverse)
-library(shinyBS)
-library(shinyjs)
+library("shiny")
+library("rfigshare")
+library("lubridate")
+library("plotly")
+library("highcharter")
+library("dygraphs")
+library("xts")
+library("htmltools")
+library("tidyverse")
+library("shinyBS")
+library("shinyjs")
+library("forcats")
 loaded_libraries <- Sys.time()
 
-# library(oidnChaRts)
+library(oidnChaRts)
 
-source("oidnChaRts.R")
+# source("oidnChaRts.R")
 source("data-processing.R", local = T)
 
 loaded_dataprocessing <- Sys.time()
@@ -92,43 +93,43 @@ custom_ts_selector <- function(x) {
 }
 
 shinyServer(function(input, output, session) {
-
   ## === Landing Tab
   output$landing_xts_highchart <- renderHighchart({
-    
-    if(is.null(input$landing_rollmean_k)){
-      shinyjs::show(id = "loading-content", anim = TRUE, animType = "fade")
+    if (is.null(input$landing_rollmean_k)) {
+      shinyjs::show(id = "loading-content",
+                    anim = TRUE,
+                    animType = "fade")
     } else {
-      shinyjs::hide(id = "loading-content", anim = TRUE, animType = "fade")
+      shinyjs::hide(id = "loading-content",
+                    anim = TRUE,
+                    animType = "fade")
     }
     
     
     selected_categories <- "Total"
     
     actual_labour_index <-
-      gig_economy_by_occupation[gig_economy_by_occupation$occupation == "Total", ]
+      gig_economy_by_occupation[gig_economy_by_occupation$occupation == "Total",]
     
-    ma_data <- move_avg_hc_series(actual_labour_index, window = as.numeric(input$landing_rollmean_k))
-    
-    # shinyjs::hide(id = "loading-content", anim = TRUE, animType = "fade")
+    actual_labour_index <- actual_labour_index %>%
+      mutate(moving.average = rollmean(count, k = as.numeric(input$landing_rollmean_k), na.pad = TRUE, align = "right")) ## CORRECT WINDOWING
     
     highchart(type = "stock") %>%
-      hc_add_series(
-        ma_data,
-        "line",
-        hcaes(x = date, y = count),
-        name = "Online Labour Index"
-      ) %>%
-      hc_tooltip(valueDecimals = 1,  xDateFormat = "%d %b %Y") %>%
+      hc_add_series(data = actual_labour_index,
+                    type = "line",
+                    hcaes(x = date,
+                          y = moving.average),
+                    name = "Online Labour Index") %>%
+      hc_tooltip(valueDecimals = 1,
+                 xDateFormat = "%d %b %Y") %>%
       hc_yAxis("opposite" = FALSE,
                title = list("text" = "Online Labour Index")) %>%
       custom_ts_selector %>%
       iLabour_branding
     
-    
   })
   
-  ## ==== By occupation tab 
+  ## ==== By occupation tab
   
   output$occupation_rollmean_k_UI <- renderUI({
     radioButtons(
@@ -144,54 +145,47 @@ shinyServer(function(input, output, session) {
   })
   
   output$occupation_xts_highchart <- renderHighchart({
-    
-    if(is.null(input$occupation_rollmean_k)){
+    if (is.null(input$occupation_rollmean_k)) {
       return()
     }
     
-    all_occupations <- setdiff(unique(gig_economy_by_occupation$occupation), "Total")
-    legend_order <- gig_economy_by_occupation %>%
-      filter(occupation %in% all_occupations) %>%
+    index_by_occupation <- gig_economy_by_occupation %>%
+      filter(occupation != "Total") %>%
       group_by(occupation) %>%
-      mutate(total = sum(count)) %>%
+      arrange(desc(date), occupation) %>%
+      mutate(moving.average = rollmean(count, k = as.numeric(input$occupation_rollmean_k), na.pad = TRUE, align = "right")) %>%
+      ungroup()
+    
+    legend_order <- index_by_occupation %>%
+      group_by(occupation) %>%
+      summarise(total = sum(count)) %>%
       arrange(desc(total)) %>%
       select(occupation) %>%
       unique() %>%
-      unlist(use.names = F)
+      .[[1]]
     
-    hc <- highchart(type = "stock")
-    invisible(lapply(all_occupations,
-                     function(x) {
-                       filtered_data <- gig_economy_by_occupation %>%
-                         filter(occupation == x) %>%
-                         select(date, count)
-
-                       ma_data <- move_avg_hc_series(filtered_data, window = as.numeric(input$occupation_rollmean_k))
-
-                       hc <<- hc %>%
-                         hc_add_series(
-                           ma_data,
-                           "line",
-                           hcaes(x = date, y = count),
-                           name = x,
-                           index = which(legend_order == x) - 1
-                         )
-                     }))
+    index_by_occupation <- index_by_occupation %>%
+      mutate(occupation = factor(occupation, levels = legend_order))
     
-    hc %>%
-      hc_tooltip(valueDecimals = 1,  xDateFormat = "%d %b %Y") %>%
-      hc_legend(enabled = TRUE, reverse = TRUE) %>%
-      hc_yAxis(
-        "opposite" = FALSE,
-        title = list("text" = "Online Labour Index")
-      ) %>%
+    
+    highchart(type = "stock") %>%
+      hc_add_series(data = index_by_occupation,
+                    type = "line",
+                    hcaes(x = date,
+                          y = moving.average,
+                          group = occupation)) %>%
+      hc_tooltip(valueDecimals = 1,
+                 xDateFormat = "%d %b %Y") %>%
+      hc_yAxis("opposite" = FALSE,
+               title = list("text" = "Online Labour Index")) %>%
       custom_ts_selector %>%
-      iLabour_branding
+      iLabour_branding %>%
+      hc_legend(enabled = TRUE, reverse = TRUE)
     
     
   })
   
-  ## ==== By employer country 
+  ## ==== By employer country
   
   output$region_rollmean_k_UI <- renderUI({
     radioButtons(
@@ -207,8 +201,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$region_xts_highchart <- renderHighchart({
-    
-    if(is.null(input$region_rollmean_k)){
+    if (is.null(input$region_rollmean_k)) {
       return()
     }
     
@@ -224,65 +217,59 @@ shinyServer(function(input, output, session) {
       "all Africa"
     )
     
-    tallied_boundaries <- gig_economy_by_boundary %>%
+    index_by_countrygroup <- gig_economy_by_boundary %>%
+      filter(country_group %in% selected_country_groups) %>%
       group_by(country_group, timestamp) %>%
-      mutate(total = sum(count)) %>%
-      distinct(total) %>% # keep ONLY total and groups
-      group_by(timestamp) %>%
-      rename(date = timestamp) %>%
-      mutate(total = total / sum(total))
+      summarise(total = sum(count)) %>%
+      rename(date = timestamp) %>% 
+      group_by(date) %>%
+      mutate(total = total / sum(total)) %>%
+      ungroup()
     
-    tallied_occuptation_total <- gig_economy_by_occupation %>%
+    
+    index_total <- gig_economy_by_occupation %>%
       filter(occupation == "Total") %>%
-      select(date, count) %>%
-      filter(date %in% tallied_boundaries$date)
+      filter(date %in% index_by_countrygroup$date) %>%
+      select(date, count)
     
-    tallied_boundaries <-
-      left_join(tallied_occuptation_total, tallied_boundaries) %>%
-      mutate(labour.index = count * total)
     
-    legend_order <- tallied_boundaries %>%
-      ungroup() %>%
-      arrange(desc(labour.index)) %>%
+    index_by_countrygroup <- index_total %>%
+      left_join(index_by_countrygroup) %>%
+      mutate(labour.index = count * total) %>%
+      arrange(date)
+    
+    
+    index_by_countrygroup <- index_by_countrygroup %>%
+      group_by(country_group) %>%
+      arrange(desc(date), country_group) %>%
+      mutate(moving.average = rollmean(labour.index, k = as.numeric(input$region_rollmean_k), na.pad = TRUE, align = "right")) %>%
+      ungroup()
+    
+    legend_order <- index_by_countrygroup %>%
+      arrange(desc(moving.average)) %>%
       select(country_group) %>%
       unique() %>%
-      unlist(use.names = F)
+      .[[1]]
     
-    tallied_boundaries
     
-    hc <- highchart()
+    index_by_countrygroup <- index_by_countrygroup %>%
+      mutate(country_group = factor(country_group, levels = legend_order)) %>%
+      arrange(country_group)
     
-    hc <- highchart(type = "stock")
-    invisible(lapply(selected_country_groups,
-                     function(x) {
-                       filtered_data <- tallied_boundaries %>%
-                         filter(country_group == x) %>%
-                         select(date, labour.index) %>%
-                         rename(count = labour.index)
-                       
-                       
-                       ma_data <- move_avg_hc_series(filtered_data, window = as.numeric(input$region_rollmean_k))
-
-                       hc <<- hc %>%
-                         hc_add_series(
-                           ma_data,
-                           "line",
-                           hcaes(x = date, y = count),
-                           name = x,
-                           index = which(legend_order == x) - 1
-                         )
-                     }))
     
-    hc %>%
-      hc_tooltip(valueDecimals = 1,  xDateFormat = "%d %b %Y") %>%
-      hc_legend(enabled = TRUE, reverse = TRUE) %>%
-      hc_yAxis(
-        "opposite" = FALSE,
-        title = list("text" = "Online Labour Index")
-      ) %>%
+    highchart(type = "stock") %>%
+      hc_add_series(data = index_by_countrygroup,
+                    type = "line",
+                    hcaes(x = date,
+                          y = moving.average,
+                          group = country_group)) %>%
+      hc_tooltip(valueDecimals = 1,
+                 xDateFormat = "%d %b %Y") %>%
+      hc_yAxis("opposite" = FALSE,
+               title = list("text" = "Online Labour Index")) %>%
       custom_ts_selector %>%
-      iLabour_branding
-    
+      iLabour_branding %>%
+      hc_legend(enabled = TRUE, reverse = TRUE)
     
   })
   
@@ -367,27 +354,54 @@ shinyServer(function(input, output, session) {
         hc <- stacked_bar_chart(
           data = prepared_data,
           library = "highcharter",
-          categories_column = categories_column,
-          categories_order = categories_column_order,
-          subcategories_column = subcategories_column,
-          subcategories_order = subcategories_column_order,
-          value_column = "total",
-          stacking_type = input$global_trends_stack_by
+          categories.column = as.formula(paste0("~", categories_column)),
+          categories.order = categories_column_order,
+          subcategories.column = as.formula(paste0("~", subcategories_column)),
+          subcategories.order = subcategories_column_order,
+          value.column = as.formula(paste0("~", "total")),
+          stacking.type = input$global_trends_stack_by
         ) %>%
           hc_chart(zoomType = "x",
                    panning = TRUE,
                    panKey = 'shift') %>%
-          hc_tooltip(
-            formatter = JS(
-              "function() {return '<b>'+ this.series.name +'</b>: '+ Highcharts.numberFormat(this.percentage, 0) +' %';}"
-            ),
-            shared = TRUE
-          ) %>% iLabour_branding()
+          iLabour_branding()
         
         if (input$global_trends_stack_by == "percent") {
-          hc %>% hc_yAxis(max = 100)
+          hc %>% hc_yAxis(max = 100) %>%
+            hc_tooltip(
+              formatter = JS(
+                "function(){
+                var subcat = '';
+                $.each(this.points.reverse(),function(i, point){
+                
+                subcat += '<span style=\U0022' + 'color:' + this.point.series.color + '\U0022>\u25CF</span>' + ' ' + this.point.series.name + ': ' + Highcharts.numberFormat(this.point.percentage, 0) + '%<br/>';
+                //console.log(this.point.series.name)
+                });
+                
+                return this.x.name + ' employer occupational distribution' + '<br/>' +
+                subcat;
+        }"
+),
+shared = TRUE
+              )
         } else {
-          hc
+          hc %>%
+            hc_tooltip(
+              formatter = JS(
+                "function(){
+                var subcat = '';
+                $.each(this.points.reverse(),function(i, point){
+                
+                subcat += '<span style=\U0022' + 'color:' + this.point.series.color + '\U0022>\u25CF</span>' + ' ' + this.point.series.name + ': ' + Highcharts.numberFormat(this.point.stackY, 2) + '<br/>';
+                //console.log(this.point.series.name)
+                });
+                
+                return this.x.name + ' employer occupational distribution' + '<br/>' +
+                subcat;
+        }"
+),
+shared = TRUE
+              )
         }
       },
       "occupation" = {
@@ -422,28 +436,54 @@ shinyServer(function(input, output, session) {
         hc <- stacked_bar_chart(
           data = prepared_data,
           library = "highcharter",
-          categories_column = categories_column,
-          categories_order = categories_column_order,
-          subcategories_column = subcategories_column,
-          subcategories_order = subcategories_column_order,
-          value_column = "total",
-          stacking_type = input$global_trends_stack_by
+          categories.column = as.formula(paste0("~", categories_column)),
+          categories.order = categories_column_order,
+          subcategories.column = as.formula(paste0("~", subcategories_column)),
+          subcategories.order = subcategories_column_order,
+          value.column = as.formula("~total"),
+          stacking.type = input$global_trends_stack_by
         ) %>%
           hc_chart(zoomType = "x",
                    panning = TRUE,
                    panKey = 'shift') %>%
-          # hc_yAxis(max = 100) %>%
-          hc_tooltip(
-            formatter = JS(
-              "function() {return '<b>'+ this.series.name +'</b>: '+ Highcharts.numberFormat(this.percentage, 0) +' %';}"
-            ),
-            shared = TRUE
-          )  %>% iLabour_branding()
+         iLabour_branding()
         
         if (input$global_trends_stack_by == "percent") {
-          hc %>% hc_yAxis(max = 100)
+          hc %>% hc_yAxis(max = 100) %>%
+            hc_tooltip(
+              formatter = JS(
+                "function(){
+                var subcat = '';
+                $.each(this.points.reverse(),function(i, point){
+                
+                subcat += '<span style=\U0022' + 'color:' + this.point.series.color + '\U0022>\u25CF</span>' + ' ' + this.point.series.name + ': ' + Highcharts.numberFormat(this.point.percentage, 0) + '%<br/>';
+                //console.log(this.point.series.name)
+                });
+                
+                return this.x.name + ' employer occupational distribution' + '<br/>' +
+                subcat;
+        }"
+              ),
+              shared = TRUE
+            )
         } else {
-          hc
+          hc %>% 
+            hc_tooltip(
+              formatter = JS(
+                "function(){
+                var subcat = '';
+                $.each(this.points.reverse(),function(i, point){
+                
+                subcat += '<span style=\U0022' + 'color:' + this.point.series.color + '\U0022>\u25CF</span>' + ' ' + this.point.series.name + ': ' + Highcharts.numberFormat(this.point.stackY, 2) + '<br/>';
+                //console.log(this.point.series.name)
+                });
+                
+                return this.x.name + ' employer occupational distribution' + '<br/>' +
+                subcat;
+        }"
+),
+shared = TRUE
+              )
         }
         
         
@@ -484,32 +524,53 @@ shinyServer(function(input, output, session) {
         hc <- stacked_bar_chart(
           data = prepared_data,
           library = "highcharter",
-          categories_column = categories_column,
-          categories_order = categories_column_order,
-          subcategories_column = subcategories_column,
-          subcategories_order = subcategories_column_order,
-          value_column = "total",
-          stacking_type = input$global_trends_stack_by
+          categories.column = as.formula(paste0("~", categories_column)),
+          categories.order = categories_column_order,
+          subcategories.column = as.formula(paste0("~", subcategories_column)),
+          subcategories.order = subcategories_column_order,
+          value.column = as.formula("~total"),
+          stacking.type = input$global_trends_stack_by
         ) %>%
           hc_chart(zoomType = "x",
                    panning = TRUE,
-                   panKey = 'shift') %>%
-          hc_tooltip(
-            formatter = JS(
-              "function() {console.log(this);
-              return '<b>'+ this.series.name +'</b>: '+ Highcharts.numberFormat(this.percentage, 0) +' %';}"
-            ),
-            shared = TRUE
-          ) %>% iLabour_branding()
+                   panKey = 'shift') %>% 
+          iLabour_branding()
         
         if (input$global_trends_stack_by == "percent") {
-          hc %>% hc_yAxis(max = 100)
-        } else {
-          hc
-        }
-      }
-    )
+          hc %>% hc_yAxis(max = 100) %>%
+            hc_tooltip(
+              formatter = JS(
+                "function(){
+                var subcat = '';
+                $.each(this.points.reverse(),function(i, point){
+                
+                subcat += '<span style=\U0022' + 'color:' + this.point.series.color + '\U0022>\u25CF</span>' + ' ' + this.point.series.name + ': ' + Highcharts.numberFormat(this.point.percentage, 0) + '%<br/>';
+                //console.log(this.point.series.name)
+                });
+                
+                return this.x.name + ' employer occupational distribution' + '<br/>' +
+                subcat;
+        }"
+),
+shared = TRUE
+              )
+  } else {
+    hc %>%
+      hc_tooltip(
+        formatter = JS(
+          "function(){
+          console.log(this);
+console.log(this.points[0].total);
+          return Highcharts.numberFormat(this.points[0].total, 1) + '% of workers are in ' +
+          this.points[0].key.name;
+  }"
+),
+        shared = TRUE
+      )
+  }
+}
+            )
     
-  })
+    })
   
-})
+  })

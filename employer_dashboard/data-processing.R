@@ -15,7 +15,9 @@ fs_deposit_id <- 3761562
 deposit_details <- fs_details(fs_deposit_id)
 
 deposit_details <- unlist(deposit_details$files)
-deposit_details <- data.frame(split(deposit_details, names(deposit_details)),stringsAsFactors = F)
+deposit_details <-
+  data.frame(split(deposit_details, names(deposit_details)), stringsAsFactors = F)
+
 
 occupation_import <- read_csv(deposit_details[grepl("OLIdata_",deposit_details$name),"download_url"])
 
@@ -27,6 +29,7 @@ gig_economy_by_occupation <- occupation_import
 ## Extract only new jobs
 gig_economy_by_occupation <- gig_economy_by_occupation %>%
   filter(status == "new")
+
 
 
 region_import <- read_csv(deposit_details[grepl("bcountrydata_",deposit_details$name),"download_url"])

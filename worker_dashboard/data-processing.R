@@ -11,30 +11,66 @@
 ## =========================== Load file (temp location) ========================
 ## ==============================================================================
 
-# fs_deposit_id <- 3761562
-# deposit_details <- fs_details(fs_deposit_id)
-# 
-# deposit_details <- unlist(deposit_details$files)
-# deposit_details <- data.frame(split(deposit_details, names(deposit_details)),stringsAsFactors = F)
-# 
+fs_deposit_id <- 3761562
+deposit_details <- fs_details(fs_deposit_id)
 
-worker_data <- read_csv("http://linux.oii.ox.ac.uk/~otto.kassi/OLI/worker_countrydata.txt")
+deposit_details <- unlist(deposit_details$files)
+deposit_details <-
+  data.frame(split(deposit_details, names(deposit_details)), stringsAsFactors = F)
 
-region_labels <- read_csv("data/regions.csv")
+deposit_details %>%
+  filter(grepl("worker_countrydata_", name)) %>%
+  select(download_url) %>%
+  .[[1]] %>%
+  read_csv()
 
 
-# 
-# 
-# region_import <- read_csv(deposit_details[grepl("bcountrydata_",deposit_details$name),"download_url"])
-# 
-# region_df <- region_import %>%
-#   select(country, country_group) %>%
-#   unique()
-# 
+
+worker_data <- deposit_details %>%
+  filter(grepl("worker_countrydata_", name)) %>%
+  select(download_url) %>%
+  .[[1]] %>%
+  read_csv()
+
+deposit_details %>% 
+  filter(name == "Countries_continents_regions.txt") %>%
+  select(download_url) %>%
+  .[[1]] %>%
+  read_delim(delim = ";")
+
+region_labels <- deposit_details %>% 
+  filter(name == "Countries_continents_regions.txt") %>%
+  select(download_url) %>%
+  .[[1]] %>%
+  read_delim(delim = ";")
+
+country_continents <- deposit_details %>%
+  filter(grepl("Countries_continents", name)) %>%
+  select(download_url) %>%
+  .[[1]] %>%
+  read_delim(delim = ";")
+
 worker_data <- worker_data %>%
-  mutate(region = plyr::mapvalues(country, region_labels$country, region_labels$region))
+  mutate(
+    continent = plyr::mapvalues(country, from = country_continents$Country, to = country_continents$Continent)
+  )
 
 
+load("data/world_shapefiles.rdata")
+
+occupation_colours <- read_csv("data/occupation-colours.csv")
+
+worker_data <- worker_data %>%
+  mutate(
+    region = plyr::mapvalues(country, country_continents$Country, country_continents$Continent),
+    colour = plyr::mapvalues(
+      occupation,
+      occupation_colours$occupation,
+      occupation_colours$colour
+    )
+  )
+
+##====== Countries/Continents
 
 
 
