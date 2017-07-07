@@ -152,7 +152,7 @@ shinyServer(function(input, output, session) {
     index_by_occupation <- gig_economy_by_occupation %>%
       filter(occupation != "Total") %>%
       group_by(occupation) %>%
-      arrange(desc(date), occupation) %>%
+      arrange(date) %>%
       mutate(moving.average = rollmean(count, k = as.numeric(input$occupation_rollmean_k), na.pad = TRUE, align = "right")) %>%
       ungroup()
     
@@ -241,7 +241,7 @@ shinyServer(function(input, output, session) {
     
     index_by_countrygroup <- index_by_countrygroup %>%
       group_by(country_group) %>%
-      arrange(desc(date), country_group) %>%
+      arrange(date) %>%
       mutate(moving.average = rollmean(labour.index, k = as.numeric(input$region_rollmean_k), na.pad = TRUE, align = "right")) %>%
       ungroup()
     
