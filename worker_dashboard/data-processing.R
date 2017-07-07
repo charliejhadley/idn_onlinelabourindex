@@ -32,13 +32,13 @@ worker_data <- deposit_details %>%
   .[[1]] %>%
   read_csv()
 
-deposit_details %>% 
+deposit_details %>%
   filter(name == "Countries_continents_regions.txt") %>%
   select(download_url) %>%
   .[[1]] %>%
   read_delim(delim = ";")
 
-region_labels <- deposit_details %>% 
+region_labels <- deposit_details %>%
   filter(name == "Countries_continents_regions.txt") %>%
   select(download_url) %>%
   .[[1]] %>%
@@ -62,16 +62,18 @@ occupation_colours <- read_csv("data/occupation-colours.csv")
 
 worker_data <- worker_data %>%
   mutate(
-    region = plyr::mapvalues(country, country_continents$Country, country_continents$Continent),
+    region = plyr::mapvalues(
+      country,
+      country_continents$Country,
+      country_continents$Continent,
+      warn_missing = FALSE
+    ),
     colour = plyr::mapvalues(
       occupation,
       occupation_colours$occupation,
-      occupation_colours$colour
+      occupation_colours$colour,
+      warn_missing = FALSE
     )
   )
 
 ##====== Countries/Continents
-
-
-
-
