@@ -59,47 +59,45 @@ shinyServer(fluidPage(
                highchartOutput("landing_xts_highchart", width = "100%", height = "500px")
              )),
     tabPanel("By occupation",
-             fluidPage(fluidPage(
-               fluidRow(column(
-                 uiOutput("occupation_rollmean_k_UI"),
-                 width = 12
-               )),
-               highchartOutput("occupation_xts_highchart", width = "100%"),
-               wellPanel(
-                 "Add/Remove series by clicking legend entries above."
+             fluidPage(
+               fluidPage(
+                 fluidRow(column(
+                   uiOutput("occupation_rollmean_k_UI"),
+                   width = 12
+                 )),
+                 highchartOutput("occupation_xts_highchart", width = "100%"),
+                 wellPanel("Add/Remove series by clicking legend entries above.")
                )
-             ))),
+             )),
     tabPanel(
       "By employer country",
       fluidPage(
         uiOutput("region_rollmean_k_UI", width = "100%"),
         width = 5,
         highchartOutput("region_xts_highchart", width = "100%"),
-        wellPanel(
-          "Add/Remove series by clicking legend entries above."
-        ),
+        wellPanel("Add/Remove series by clicking legend entries above."),
         width = "100%"
       )
     ),
-    tabPanel("Occupation x empl country",
-             fluidPage(
-               fluidRow(column(
-                 uiOutput("global_trends_group_by_UI"),
-                 width = 6
-               ),
-               column(
-                 uiOutput("global_trends_stack_by_UI"),
-                 width = 6
-               )),
-               highchartOutput(
-                 "global_trends_stacked_bar_chart",
-                 width = "100%",
-                 height = "450px"
-               ),
-               wellPanel(
-                 "Add/Remove series by clicking legend entries above."
-               )
-             )),
+    tabPanel(
+      "Occupation x empl country",
+      fluidPage(
+        fluidRow(column(
+          uiOutput("global_trends_group_by_UI"),
+          width = 6
+        ),
+        column(
+          uiOutput("global_trends_stack_by_UI"),
+          width = 6
+        )),
+        highchartOutput(
+          "global_trends_stacked_bar_chart",
+          width = "100%",
+          height = "450px"
+        ),
+        wellPanel("Add/Remove series by clicking legend entries above.")
+      )
+    ),
     tabPanel(
       HTML(
         '<span class="glyphicon glyphicon-info-sign" aria-hidden="true""></span>'
