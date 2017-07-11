@@ -18,25 +18,11 @@ deposit_details <- unlist(deposit_details$files)
 deposit_details <-
   data.frame(split(deposit_details, names(deposit_details)), stringsAsFactors = F)
 
-deposit_details %>%
-  filter(grepl("worker_countrydata_", name)) %>%
-  select(download_url) %>%
-  .[[1]] %>%
-  read_csv()
-
-
-
 worker_data <- deposit_details %>%
   filter(grepl("worker_countrydata_", name)) %>%
   select(download_url) %>%
   .[[1]] %>%
   read_csv()
-
-deposit_details %>%
-  filter(name == "Countries_continents_regions.txt") %>%
-  select(download_url) %>%
-  .[[1]] %>%
-  read_delim(delim = ";")
 
 region_labels <- deposit_details %>%
   filter(name == "Countries_continents_regions.txt") %>%
