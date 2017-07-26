@@ -18,9 +18,28 @@ library("rlang")
 library("forcats")
 library("leaflet.extras") ## Needed for background color of leaflet map
 library("oidnChaRts")
+library("ggthemes")
+
 
 source("data-processing.R")
 source("dominant-occupation-worldmap.R")
+
+worldmap_dominant_occupation_shapefiles %>%
+  filter(!name == "Antarctica") %>%
+  # mutate(most.represented.occupation.percent = factor(most.represented.occupation.percent)) %>%
+  mutate(
+    most.represented.occupation.percent = fct_explicit_na(most.represented.occupation.percent, na_level = "Not enough data"),
+    most.represented.occupation.percent = factor(most.represented.occupation.percent, levels = occupation_colours$label)
+  ) %>%
+  select(most.represented.occupation.percent, colour) %>%
+  ggplot(aes(fill = most.represented.occupation.percent)) +
+  geom_sf(aes(fill = most.represented.occupation.percent)) +
+  scale_fill_manual(values = occupation_colours$colour) +
+  theme_map() + 
+  theme(panel.background = element_rect(fill='#aacbff'))
+
+
+ggsave("ggplot2.png")
 
 ui <- shinyUI(
   fluidPage(
@@ -38,7 +57,7 @@ server <- function(input, output, session){
   
   observeEvent(input$saveImage,
                {
-                 lflet <- plot_shapefiles %>%
+                 lflet <- worldmap_dominant_occupation_shapefiles %>%
                    filter(!name == "Antarctica") %>%
                    leaflet(options = leafletOptions(minZoom = input$minZoom)) %>%
                    addPolygons(
