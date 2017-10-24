@@ -21,7 +21,9 @@ There are four views of the data:
 
 ## Worker Dashboard
 
-The worker dashboard is currently under development, will provide a comparison of the success rate for winning jobs by different types of workers.
+The worker dashboard was developed by the IDN on behalf of Prof. Vili Lehdonvirta and Dr. Otto Kässi. 
+
+<img src="worker-dashboard.png" width="200px"></img>
 
 # Attribution
 
