@@ -43,6 +43,8 @@ iLabour_branding <- function(x) {
 
 shinyServer(function(input, output, session) {
   
+  source("dominant-occupation-worldmap.R", local = TRUE)$value
+  
   source(file = "tab_occupation-x-worker-country.R", local = TRUE)$value
   
   source(file = "tab_worldmap.R", local = TRUE)$value

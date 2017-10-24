@@ -10,10 +10,6 @@ output$worldmap_selected_occupation_UI <- renderUI({
 })
 
 
-
-
-source("dominant-occupation-worldmap.R", local = TRUE)$value
-
 worldmap_occupation_max_palvalue <- worker_data %>%
   filter(timestamp == max(timestamp)) %>%
   group_by(occupation) %>%
