@@ -6,6 +6,8 @@ This repository contains the code for two Shiny apps developed and hosted by Oxf
 
 The data behind the apps is deposited nightly to this Figshare deposit: [https://dx.doi.org/10.6084/m9.figshare.3761562](https://dx.doi.org/10.6084/m9.figshare.3761562).
 
+This code is deposited on Figshare here: [http://doi.org/10.6084/m9.figshare.5554177](http://doi.org/10.6084/m9.figshare.5554177)
+
 ## Employer Dashboard
 
 The employer dashboard was initially designed developed as a [case study](http://idn.it.ox.ac.uk/article/online-labour-index-case-study) for the Live Data project, which spawned the Interactive Data Network. 
