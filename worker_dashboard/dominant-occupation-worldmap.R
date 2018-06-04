@@ -106,18 +106,31 @@ worldmap_dominant_occupation_shapefiles <- world_shapefiles %>%
     ),
     most.represented.occupation.percent = ifelse(
       name %in% worker_data$country,
-      plyr::mapvalues(name, from = top3_occuptations$country, to = top3_occuptations$occupation.1, warn_missing = FALSE),
+      plyr::mapvalues(
+        name,
+        from = top3_occuptations$country,
+        to = top3_occuptations$occupation.1,
+        warn_missing = FALSE
+      ),
+      NA
+    ),
+    most.represented.occupation.percent = ifelse(
+      most.represented.occupation.percent %in% occupation_colours$occupation,
+      most.represented.occupation.percent,
       NA
     ),
     colour = ifelse(
-      name %in% worker_data$country,
+      !is.na(most.represented.occupation.percent),
       plyr::mapvalues(
-        top3_occuptations$country,
+        most.represented.occupation.percent,
         from = occupation_colours$occupation,
         to = occupation_colours$colour,
         warn_missing = FALSE
       ),
-      NA
+      occupation_colours %>%
+        filter(is.na(occupation)) %>%
+        select(colour) %>%
+        .[[1]]
     )
   )
 
