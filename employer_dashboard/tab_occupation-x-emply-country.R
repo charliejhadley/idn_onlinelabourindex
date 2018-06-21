@@ -26,17 +26,18 @@ output$global_trends_stacked_bar_chart <- renderHighchart({
   if (is.null(input$global_trends_group_by)) {
     return()
   }
-  
+
   categories_column <- input$global_trends_group_by
-  
+
   if (categories_column == "occupation") {
     subcategories_column <- "country_group"
-  } else
+  } else {
     subcategories_column <- "occupation"
-  
+  }
+
   ## Sum by occupation and region
-  
-  switch (
+
+  switch(
     categories_column,
     "country" = {
       categories_column_order <- gig_economy_by_boundary %>%
