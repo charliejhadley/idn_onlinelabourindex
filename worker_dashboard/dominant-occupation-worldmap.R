@@ -34,9 +34,6 @@ worldmap_dominant_palette <- colorFactor(occupation_colours$colour,
                                          levels = occupation_colours$occupation)
 
 
-
-
-
 ## Calculate top 3 occupations for each country
 top3_occuptations <- worker_data %>%
   filter(timestamp == max(timestamp)) %>%
@@ -56,93 +53,17 @@ top3_occuptations <- worker_data %>%
   spread(id, occupation) %>%
   select(country, occupation.1, occupation.2, occupation.3)
 
-## Add top3 occupations to the worldmap_dominant_occupation_shapefiles
-worldmap_dominant_occupation_shapefiles <- world_shapefiles %>%
-  mutate(
-    occupation.1 = ifelse(
-      name %in% worker_data$country,
-      plyr::mapvalues(
-        name,
-        from = top3_occuptations$country,
-        to = top3_occuptations$occupation.1,
-        warn_missing = FALSE
-      ),
-      NA
-    ),
-    occupation.1 = ifelse(
-      occupation.1 %in% occupation_colours$occupation,
-      occupation.1,
-      NA
-    ),
-    occupation.2 = ifelse(
-      name %in% worker_data$country,
-      plyr::mapvalues(
-        name,
-        from = top3_occuptations$country,
-        to = top3_occuptations$occupation.2,
-        warn_missing = FALSE
-      ),
-      NA
-    ),
-    occupation.2 = ifelse(
-      occupation.2 %in% occupation_colours$occupation,
-      occupation.2,
-      NA
-    ),
-    occupation.3 = ifelse(
-      name %in% worker_data$country,
-      plyr::mapvalues(
-        name,
-        from = top3_occuptations$country,
-        to = top3_occuptations$occupation.3,
-        warn_missing = FALSE
-      ),
-      NA
-    ),
-    occupation.3 = ifelse(
-      occupation.3 %in% occupation_colours$occupation,
-      occupation.3,
-      NA
-    ),
-    most.represented.occupation.percent = ifelse(
-      name %in% worker_data$country,
-      plyr::mapvalues(
-        name,
-        from = top3_occuptations$country,
-        to = top3_occuptations$occupation.1,
-        warn_missing = FALSE
-      ),
-      NA
-    ),
-    most.represented.occupation.percent = ifelse(
-      most.represented.occupation.percent %in% occupation_colours$occupation,
-      most.represented.occupation.percent,
-      NA
-    ),
-    colour = ifelse(
-      !is.na(most.represented.occupation.percent),
-      plyr::mapvalues(
-        most.represented.occupation.percent,
-        from = occupation_colours$occupation,
-        to = occupation_colours$colour,
-        warn_missing = FALSE
-      ),
-      occupation_colours %>%
-        filter(is.na(occupation)) %>%
-        select(colour) %>%
-        .[[1]]
-    )
-  )
 
-dominant_label_data <- worldmap_dominant_occupation_shapefiles %>%
-  select(name, occupation.1, occupation.2, occupation.3)
-st_geometry(dominant_label_data) <- NULL
+top3_occuptations <- top3_occuptations %>%
+  rowwise() %>%
+  mutate(popup = country_dominants_label(country, occupation.1, occupation.2, occupation.3))
 
+top3_occuptations %>%
+  filter(country == "Sudan")
 
-dominant_popup_labels <-
-  unlist(lapply(1:nrow(dominant_label_data), function(x) {
-    do.call("country_dominants_label", unname(as.list(dominant_label_data[x, ])))
-  }))
+world_dominant_occupations <- world_shapefiles %>%
+  left_join(top3_occuptations, by = c("name" = "country")) %>%
+  left_join(occupation_colours, by = c("occupation.1" = "occupation")) %>%
+  mutate(popup = if_else(is.na(popup), paste("There is not yet enough data about", name), popup))
 
-worldmap_dominant_occupation_shapefiles$dominant_popup_labels <- dominant_popup_labels
 
