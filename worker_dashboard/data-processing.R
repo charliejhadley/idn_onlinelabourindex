@@ -46,6 +46,18 @@ load("data/world_shapefiles.rdata")
 
 occupation_colours <- read_csv("data/occupation-colours.csv")
 
+region_colours <- tribble(
+  ~region, ~colour,
+    "Asia", "#434348",
+    "Europe", "#90ed7d", 
+    "North America", "#f7a35c",
+    "Africa", "#7cb5ec",
+    "South America", "#f15c80",
+    "Oceania", "#8085e9"
+)
+
+
+
 worker_data <- worker_data %>%
   mutate(
     region = plyr::mapvalues(

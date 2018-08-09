@@ -25,7 +25,6 @@ color: #000000;
 library(shiny)
 library(highcharter)
 library(plotly)
-library(dygraphs)
 library(htmltools)
 library(shinyBS)
 library(shinyjs)

@@ -34,14 +34,6 @@ worldmap_occupation_palette <- colorBin(# "viridis",
   bin = c(0.1, 2.5, 5, 10, 20, 30, worldmap_occupation_max_palvalue + 5))
 
 
-# worldmap_occupation_palette <-
-#   colorNumeric(
-#     "viridis",
-#     domain = c(.1,
-#                worldmap_occupation_max_palvalue),
-#     # domain = NULL,
-#     na.color = "#e2e2e2"
-#   )
 
 worldmap_occupation_shapefiles <-
   eventReactive(input$worldmap_selected_occupation,
@@ -85,15 +77,17 @@ output$worker_occupation_choropleth <- renderLeaflet({
   shinyjs::show("loading-choropleth")
   
   if (input$world_map_dominant_or_occupation == "dominant") {
-    plot_shapefiles <- worldmap_dominant_occupation_shapefiles
+    
     shinyjs::hide("loading-choropleth")
-    plot_shapefiles %>%
+    
+    
+    world_dominant_occupations %>%
       filter(!name == "Antarctica") %>%
       leaflet(options = leafletOptions(minZoom = 1.3)) %>%
       addPolygons(
         label = ~ name,
-        popup = ~ dominant_popup_labels,
-        fillColor = ~ worldmap_dominant_palette(occupation.1),
+        popup = ~ popup,
+        fillColor = ~colour,
         color = "#000000",
         weight = 0.8,
         opacity = 1,
@@ -111,7 +105,19 @@ output$worker_occupation_choropleth <- renderLeaflet({
     
     shinyjs::hide("loading-choropleth")
     
-    plot_shapefiles %>%
+    worldmap_occupation_data <- worker_data %>%
+      filter(timestamp == max(timestamp)) %>%
+      filter(occupation == input$worldmap_selected_occupation) %>%
+      mutate(relative.number.of.workers = 100 * {
+        num_workers / sum(num_workers)
+      }) %>%
+      filter(relative.number.of.workers >= .1)
+    
+    augmented_world_shapefiles <- world_shapefiles %>%
+      left_join(worldmap_occupation_data, by = c("name" = "country"))
+    
+    
+    augmented_world_shapefiles %>%
       filter(!name == "Antarctica") %>%
       leaflet(options = leafletOptions(minZoom = 1.6)) %>%
       addPolygons(
@@ -166,6 +172,8 @@ output$worker_occupation_choropleth <- renderLeaflet({
         na.label = "<0.1% of workforce"
       ) %>%
       setMapWidgetStyle(style = list(background = "#aacbff"))
+    
+    
   }
   
   

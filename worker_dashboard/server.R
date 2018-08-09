@@ -11,10 +11,8 @@
 library("shiny")
 library("rfigshare")
 library("lubridate")
-library("plotly")
 library("highcharter")
 library("dygraphs")
-library("xts")
 library("htmltools")
 library("tidyverse")
 library("shinyBS")
@@ -25,10 +23,10 @@ library("viridis")
 library("rlang")
 library("forcats")
 library("leaflet.extras") ## Needed for background color of leaflet map
-library("oidnChaRts")
 
-# source("oidnChaRts.R")
 source("data-processing.R", local = T)
+
+source("hc_subcategorised_employment.R", local = T)
 
 iLabour_branding <- function(x) {
   hc_credits(
