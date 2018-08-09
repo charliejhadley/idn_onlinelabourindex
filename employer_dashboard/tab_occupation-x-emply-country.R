@@ -37,7 +37,7 @@ output$global_trends_stacked_bar_chart <- renderHighchart({
   
   top_n_categories <- switch (categories_column,
     "country" = 20,
-    "country_group" = 5,
+    "country_group" = NA, # NOTE: "top 5 countries" tab needs to show top 5 countries AND others grouped into regions 
     "occupation" = NA
   )
   
