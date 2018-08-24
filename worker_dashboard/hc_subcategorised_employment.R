@@ -95,7 +95,7 @@ hc_subcategorised_employment <- function(employment_data, category, subcategory,
           //console.log(this.point.series.name)
           });
           
-          return this.points[0].key + ' employer occupational distribution' + '<br/>' +
+          return this.points[0].key + ' freelancer occupation distribution' + '<br/>' +
           subcat;
   }"
         ),
