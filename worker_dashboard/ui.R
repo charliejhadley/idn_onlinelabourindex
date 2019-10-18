@@ -93,7 +93,7 @@ shinyServer(fluidPage(
           choices = list(
             "Geographic region" = "region",
             "Occupation" = "occupation",
-            "Top 20 countries" = "country"
+            "Top 15 countries" = "country"
           ),
           width = "100%"
         ),

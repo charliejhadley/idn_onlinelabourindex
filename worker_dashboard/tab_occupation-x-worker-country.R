@@ -15,7 +15,7 @@ output$occupation_barchart_hc <- renderHighchart({
   
   top_n_categories <- switch (
     categories_column,
-    "country" = 20,
+    "country" = 15,
     "region" = NA,
     "occupation" = NA
   )
