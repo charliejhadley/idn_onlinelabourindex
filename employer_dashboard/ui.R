@@ -60,20 +60,26 @@ shinyServer(fluidPage(
              )),
     tabPanel("By occupation",
              fluidPage(
-               fluidPage(
-                 fluidRow(column(
-                   uiOutput("occupation_rollmean_k_UI"),
-                   width = 12
-                 )),
-                 highchartOutput("occupation_xts_highchart", width = "100%"),
-                 wellPanel("Add/Remove series by clicking legend entries above.")
-               )
+               fluidRow(column(
+                 uiOutput("occupation_rollmean_k_UI"),
+                 width = 12
+               )),
+               highchartOutput("occupation_xts_highchart", width = "100%"),
+               wellPanel("Add/Remove series by clicking legend entries above.")
              )),
     tabPanel(
       "By employer country",
       fluidPage(
-        uiOutput("region_rollmean_k_UI", width = "100%"),
-        width = 5,
+        radioButtons(
+          "region_rollmean_k",
+          label = "",
+          choices = list(
+            "Show daily value" = 1,
+            "Show 28-day moving average" = 28
+          ),
+          selected = 28,
+          inline = TRUE
+        ),
         highchartOutput("region_xts_highchart", width = "100%"),
         wellPanel("Add/Remove series by clicking legend entries above."),
         width = "100%"

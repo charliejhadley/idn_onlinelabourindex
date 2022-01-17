@@ -8,6 +8,7 @@
 ## Data Source: https://dx.doi.org/10.6084/m9.figshare.3761562
 ## ================================================================================
 
+library('rsconnect')
 library("shiny")
 library("rfigshare")
 library("lubridate")
@@ -20,6 +21,10 @@ library("tidyverse")
 library("shinyBS")
 library("shinyjs")
 library("forcats")
+# otto edits 2021-06-05
+library("RCurl")
+library('XML')
+library('markdown')
 
 # source("oidnChaRts.R")
 source("data-processing.R", local = T)
@@ -86,20 +91,26 @@ shinyServer(function(input, output, session) {
       gig_economy_by_occupation[gig_economy_by_occupation$occupation == "Total",]
     
     actual_labour_index <- actual_labour_index %>%
-      mutate(moving.average = rollmean(count, k = as.numeric(input$landing_rollmean_k), na.pad = TRUE, align = "right")) ## CORRECT WINDOWING
+      mutate(moving.average = rollmean(count, k = as.numeric(input$landing_rollmean_k), na.pad = TRUE, align = "right")) %>% ## CORRECT WINDOWING
+      select(date, moving.average) %>%
+      rename(x = date, y = moving.average)
     
     highchart(type = "stock") %>%
       hc_add_series(data = actual_labour_index,
                     type = "line",
-                    hcaes(x = date,
-                          y = moving.average),
+                    hcaes(x = x,
+                          y = y),
                     name = "Online Labour Index") %>%
+      hc_plotOptions(series = list(animation = FALSE, 
+                                   boostThreshold = 1
+      )) %>%
       hc_tooltip(valueDecimals = 1,
                  xDateFormat = "%d %b %Y") %>%
       hc_yAxis("opposite" = FALSE,
                title = list("text" = "Online Labour Index")) %>%
       custom_ts_selector %>%
       iLabour_branding
+    
     
   })
   

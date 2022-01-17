@@ -12,11 +12,9 @@
 ## ==============================================================================
 
 fs_deposit_id <- 3761562
-deposit_details <- fs_details(fs_deposit_id)
+deposit_details <- fs_details(article_id = 3761562, mine = FALSE, session = NULL)
 
-deposit_details <- unlist(deposit_details$files)
-deposit_details <-
-  data.frame(split(deposit_details, names(deposit_details)), stringsAsFactors = F)
+deposit_details <- deposit_details$files
 
 worker_data <- deposit_details %>%
   filter(grepl("worker_countrydata_", name)) %>%
@@ -55,8 +53,6 @@ region_colours <- tribble(
     "South America", "#f15c80",
     "Oceania", "#8085e9"
 )
-
-
 
 worker_data <- worker_data %>%
   mutate(

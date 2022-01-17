@@ -36,20 +36,32 @@ output$occupation_xts_highchart <- renderHighchart({
   index_by_occupation <- index_by_occupation %>%
     mutate(occupation = factor(occupation, levels = legend_order))
   
+  smaller_dataset <- index_by_occupation %>%
+    select(date, moving.average, occupation) %>%
+    rename(x = date,
+           y = moving.average,
+           group = occupation)
   
   highchart(type = "stock") %>%
-    hc_add_series(data = index_by_occupation,
+    hc_add_series(data = smaller_dataset,
                   type = "line",
-                  hcaes(x = date,
-                        y = moving.average,
-                        group = occupation)) %>%
+                  hcaes(x = x,
+                        y = y,
+                        group = group)
+    ) %>%
+    hc_plotOptions(series = list(animation = FALSE, boostThreshold = 1)) %>%
+    hc_scrollbar(liveRedraw = FALSE) %>%
     hc_tooltip(valueDecimals = 1,
-               xDateFormat = "%d %b %Y") %>%
-    hc_yAxis("opposite" = FALSE,
+               xDateFormat = "%d %b %Y",
+               animation = FALSE,
+               split = FALSE,
+               shared = TRUE) %>%
+    hc_yAxis(opposite = FALSE,
              title = list("text" = "Online Labour Index")) %>%
     custom_ts_selector %>%
     iLabour_branding %>%
-    hc_legend(enabled = TRUE, reverse = TRUE)
+    hc_legend(enabled = TRUE, reverse = TRUE, layout = "horizontal",
+              itemStyle = list(width = 150))
   
   
 })
