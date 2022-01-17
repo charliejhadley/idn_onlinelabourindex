@@ -23,6 +23,10 @@ library("viridis")
 library("rlang")
 library("forcats")
 library("leaflet.extras") ## Needed for background color of leaflet map
+## otto edits
+library('XML')
+library('RCurl')
+library('markdown')
 
 source("data-processing.R", local = T)
 

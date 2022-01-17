@@ -95,7 +95,7 @@ hc_subcategorised_employment <- function(employment_data, category, subcategory,
           //console.log(this.point.series.name)
           });
           
-          return this.points[0].key + ' employer occupational distribution' + '<br/>' +
+          return this.points[0].key + ' freelancer occupation distribution' + '<br/>' +
           subcat;
   }"
         ),
@@ -107,8 +107,8 @@ hc_subcategorised_employment <- function(employment_data, category, subcategory,
         formatter = JS(
           "function(){
             console.log(this);
-            return Highcharts.numberFormat(this.percentage, 1) + '% of vacancies in ' +
-            this.key + ' are posted within ' + this.point.subcategory;
+            return Highcharts.numberFormat(this.percentage, 1) + '% of workers in ' +
+            this.key + ' are in ' + this.point.subcategory;
             
     }"
         ),

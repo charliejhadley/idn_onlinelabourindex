@@ -8,17 +8,18 @@
 ## Data Source: https://dx.doi.org/10.6084/m9.figshare.3761562
 ## ================================================================================
 
+### Otto edits 2021-06-05####
+### Added temp workaround to fetch data from linux.oii instead of 
+### Figshare due to Rfigshare issues
+
 ## =========================== Load file ========================================
 ## ==============================================================================
+# 
 
 fs_deposit_id <- 3761562
-deposit_details <- fs_details(fs_deposit_id)
+deposit_details <- fs_details(article_id = 3761562, mine = FALSE, session = NULL)
 
-deposit_details <- unlist(deposit_details$files)
-deposit_details <-
-  data.frame(split(deposit_details, names(deposit_details)), stringsAsFactors = F)
-
-
+deposit_details <- (deposit_details$files)
 occupation_import <- read_csv(deposit_details[grepl("OLIdata_",deposit_details$name),"download_url"])
 
 occupation_import$date <- as.Date(occupation_import$date)
@@ -29,8 +30,6 @@ gig_economy_by_occupation <- occupation_import
 ## Extract only new jobs
 gig_economy_by_occupation <- gig_economy_by_occupation %>%
   filter(status == "new")
-
-
 
 region_import <- read_csv(deposit_details[grepl("bcountrydata_",deposit_details$name),"download_url"])
 region_import$timestamp <- as.Date(region_import$timestamp)

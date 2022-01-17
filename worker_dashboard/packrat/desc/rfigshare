@@ -1,0 +1,43 @@
+Package: rfigshare
+Title: An R Interface to 'figshare'
+Description: An R interface to figshare.
+Version: 0.3.7.100
+License: CC0
+URL: https://docs.ropensci.org/rfigshare,
+        https://github.com/ropensci/rfigshare
+BugReports: https://github.com/ropensci/rfigshare/issues
+Authors@R: c(person("Carl", "Boettiger", role = c("aut", "cre"),
+                email = "cboettig@gmail.com",
+                comment = c(ORCID = "0000-0002-1642-628X")),
+            person("Scott", "Chamberlain", role = "aut",
+                comment = c(ORCID = "0000-0003-1444-9135")),
+            person("Karthik", "Ram", role = "aut",
+                comment = c(ORCID = "0000-0002-0233-1757")),
+            person("Edmund", "Hart", role="aut",
+                comment = c(ORCID = "0000-0001-7367-7969")))
+Suggests: testthat, gdata, uuid, knitr, rmarkdown
+Depends: R (>= 3.0), methods
+Imports: RJSONIO, httr (>= 0.3), httpuv, yaml, ggplot2, XML
+VignetteBuilder: knitr
+RoxygenNote: 6.1.1
+X-schema.org-applicationCategory: Data Publication
+X-schema.org-keywords: data, archiving, repository, doi
+X-schema.org-isPartOf: https://ropensci.org
+RemoteType: github
+RemoteHost: api.github.com
+RemoteRepo: rfigshare
+RemoteUsername: ropensci
+RemoteRef: HEAD
+RemoteSha: 4c2edc8e5a17cee85bb0655a490eeecf7195e4c1
+GithubRepo: rfigshare
+GithubUsername: ropensci
+GithubRef: HEAD
+GithubSHA1: 4c2edc8e5a17cee85bb0655a490eeecf7195e4c1
+NeedsCompilation: no
+Packaged: 2021-06-04 10:57:13 UTC; otto
+Author: Carl Boettiger [aut, cre] (<https://orcid.org/0000-0002-1642-628X>),
+  Scott Chamberlain [aut] (<https://orcid.org/0000-0003-1444-9135>),
+  Karthik Ram [aut] (<https://orcid.org/0000-0002-0233-1757>),
+  Edmund Hart [aut] (<https://orcid.org/0000-0001-7367-7969>)
+Maintainer: Carl Boettiger <cboettig@gmail.com>
+Built: R 4.0.5; ; 2021-06-04 10:57:14 UTC; unix

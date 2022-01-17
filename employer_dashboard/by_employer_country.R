@@ -74,21 +74,30 @@ output$region_xts_highchart <- renderHighchart({
     mutate(country_group = factor(country_group, levels = legend_order)) %>%
     arrange(country_group)
   
+  smaller_dataset <- index_by_countrygroup %>%
+    select(date, moving.average, country_group) %>%
+    rename(x = date,
+           y = moving.average,
+           group = country_group)
   
   highchart(type = "stock") %>%
     hc_add_series(
-      data = index_by_countrygroup,
+      data = smaller_dataset,
       type = "line",
-      hcaes(x = date,
-            y = moving.average,
-            group = country_group)
+      hcaes(x = x,
+            y = y,
+            group = group)
     ) %>%
+    hc_plotOptions(series = list(animation = FALSE, boostThreshold = 1)) %>%
     hc_tooltip(valueDecimals = 1,
-               xDateFormat = "%d %b %Y") %>%
+               xDateFormat = "%d %b %Y",
+               split = FALSE,
+               shared = TRUE) %>%
     hc_yAxis("opposite" = FALSE,
              title = list("text" = "Online Labour Index")) %>%
     custom_ts_selector %>%
     iLabour_branding %>%
-    hc_legend(enabled = TRUE, reverse = TRUE)
+    hc_legend(enabled = TRUE, reverse = TRUE,
+              itemStyle = list(width = 100))
   
 })
